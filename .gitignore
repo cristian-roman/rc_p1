@@ -52,5 +52,4 @@ Mkfile.old
 dkms.conf
 
 # cmake-build-folder
-./server/cmake-build-debug/
 server/cmake-build-debug
