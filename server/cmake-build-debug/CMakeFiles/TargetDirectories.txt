@@ -1,3 +1,0 @@
-/home/cristian-roman/rc_p1/server/cmake-build-debug/CMakeFiles/server.dir
-/home/cristian-roman/rc_p1/server/cmake-build-debug/CMakeFiles/edit_cache.dir
-/home/cristian-roman/rc_p1/server/cmake-build-debug/CMakeFiles/rebuild_cache.dir
