@@ -11,16 +11,19 @@
 #include <malloc.h>
 
 #define LOG_FOLDER_PATH "./logs"
-char* CURRENT_LOG_FILE_PATH;
-
 
 char* TODAY_LOG_FOLDER_PATH;
+
 char* CURRENT_LOG_FILE_NAME;
+char* CURRENT_LOG_FILE_PATH;
 
 const char* GetCurrentDate();
-void CreateLogLocation(); //if it does not exist
-
 const char* GetCurrentBuildTime();
-void CreateCurrentLogFile();
+
+void Set_TODAY_LOG_FOLDER_PATH(); //if it does not exist
+void Set_CURRENT_LOG_FILE_NAME();
+void Set_CURRENT_LOG_FILE_PATH();
+
+void InitMyLogger();
 
 #endif //SERVER_MYLOGGER_H

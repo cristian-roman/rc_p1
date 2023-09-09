@@ -3,13 +3,11 @@
 //
 
 #include <stdio.h>
-#include "myLogger.h"
+#include "./custom-libraries/myLogger/myLogger.h"
 
 int main() {
 
-    CreateLogLocation();
-    CreateCurrentLogFile();
-
+    InitMyLogger();
     FILE *fp;
     fp = fopen(CURRENT_LOG_FILE_PATH, "w+");
     fprintf(fp, "BUILD STARTED AT: %s\n", GetCurrentBuildTime());

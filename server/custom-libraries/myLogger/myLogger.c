@@ -4,31 +4,7 @@
 
 #include "myLogger.h"
 
-void CreateCurrentLogFile()
-{
-    const char * buildTime = GetCurrentBuildTime();
-    CURRENT_LOG_FILE_NAME = malloc(100);
-    sprintf(CURRENT_LOG_FILE_NAME, "log_%s.txt", buildTime);
-
-    CURRENT_LOG_FILE_PATH = malloc(100);
-    sprintf(CURRENT_LOG_FILE_PATH, "%s/%s", TODAY_LOG_FOLDER_PATH, CURRENT_LOG_FILE_NAME);
-}
-
-const char * GetCurrentBuildTime()
-{
-    time_t t;
-    struct tm *tm_info;
-
-    time(&t);
-    tm_info = localtime(&t);
-
-    char * buildTime = malloc(9);
-    strftime(buildTime, 11, "%H:%M:%S", tm_info);
-
-    return buildTime;
-}
-
-void CreateLogLocation() {
+void Set_TODAY_LOG_FOLDER_PATH() {
     DIR *dir = opendir(LOG_FOLDER_PATH);
     if (dir) {
         closedir(dir);
@@ -47,6 +23,40 @@ void CreateLogLocation() {
     } else {
         mkdir(TODAY_LOG_FOLDER_PATH, 0777);
     }
+}
+
+void Set_CURRENT_LOG_FILE_NAME()
+{
+    const char * buildTime = GetCurrentBuildTime();
+    CURRENT_LOG_FILE_NAME = malloc(100);
+    sprintf(CURRENT_LOG_FILE_NAME, "log_%s.txt", buildTime);
+}
+
+void Set_CURRENT_LOG_FILE_PATH()
+{
+    CURRENT_LOG_FILE_PATH = malloc(100);
+    sprintf(CURRENT_LOG_FILE_PATH, "%s/%s", TODAY_LOG_FOLDER_PATH, CURRENT_LOG_FILE_NAME);
+}
+
+void InitMyLogger()
+{
+    Set_TODAY_LOG_FOLDER_PATH();
+    Set_CURRENT_LOG_FILE_NAME();
+    Set_CURRENT_LOG_FILE_PATH();
+}
+
+const char * GetCurrentBuildTime()
+{
+    time_t t;
+    struct tm *tm_info;
+
+    time(&t);
+    tm_info = localtime(&t);
+
+    char * buildTime = malloc(9);
+    strftime(buildTime, 11, "%H:%M:%S", tm_info);
+
+    return buildTime;
 }
 
 const char* GetCurrentDate() {
