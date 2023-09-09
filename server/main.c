@@ -60,7 +60,16 @@ int main() {
 
             // Handle communication with the client
             //handle_client(client_socket);
-            sleep(10);
+            sleep(3);
+            char buffer[1024]; // Buffer to store received message
+            ssize_t bytes_received = recv(client_socket, buffer, sizeof(buffer), 0);
+
+            if (bytes_received <= 0) {
+                LogError("Error receiving message");
+            } else {
+                buffer[bytes_received] = '\0'; // Add null terminator to make it a string
+                LogInfoFromPattern("[Received message from client]: %s", buffer);
+            }
 
             // Close client socket and exit child process
             close(client_socket);
