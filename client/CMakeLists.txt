@@ -4,7 +4,7 @@ project(server C)
 set(CMAKE_C_STANDARD 11)
 
 # Add the executable
-add_executable(server main.c)
+add_executable(client main.c)
 
 # Define the libraries and paths
 set(libraries myLogger)
@@ -22,7 +22,7 @@ foreach(index RANGE ${num_libraries})
     add_library(${library} SHARED ${path}/${library}.c)
 
     # Link the library to the executable
-    target_link_libraries(server PRIVATE ${library})
+    target_link_libraries(client PRIVATE ${library})
 
     # Set the library output directory
     set_target_properties(${library} PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/lib)

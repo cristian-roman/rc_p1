@@ -53,6 +53,7 @@ dkms.conf
 
 # cmake-build-folder
 server/cmake-build-debug
+client/cmake-build-debug
 
 # auto-generated-lib
 server/lib
