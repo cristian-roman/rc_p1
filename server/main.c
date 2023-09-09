@@ -2,9 +2,9 @@
 // Created by cristian-roman on 9/7/23.
 //
 
-#include <stdio.h>
 #include <netinet/in.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include "./custom-libraries/myLogger/myLogger.h"
 
 #define PORT 8080
@@ -36,6 +36,43 @@ int main() {
         exit(EXIT_FAILURE);
     }
 
+    if (listen(server_socket, MAX_CLIENTS) == -1) {
+        LogError("Listening failed");
+        exit(EXIT_FAILURE);
+    }
+
     LogInfoFromPattern("Server listening on port %d...", PORT);
 
+    while(1)
+    {
+        client_socket = accept(server_socket, (struct sockaddr*)&client_addr, &addr_len);
+        if(client_socket==-1)
+        {
+            LogError("Acceptance failed");
+        }
+
+        // Fork to handle the client
+        pid_t child_pid = fork();
+
+        if (child_pid == 0) {
+            // This is the child process
+            close(server_socket); // Child doesn't need to listen
+
+            // Handle communication with the client
+            //handle_client(client_socket);
+            sleep(10);
+
+            // Close client socket and exit child process
+            close(client_socket);
+            exit(EXIT_SUCCESS);
+        } else if (child_pid > 0) {
+            // This is the parent process
+            close(client_socket); // Parent doesn't need this socket
+        } else {
+            LogError("Fork failed");
+            exit(EXIT_FAILURE);
+        }
+    }
+    //close(server_socket);
+    //return 0;
 }
