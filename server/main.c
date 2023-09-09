@@ -5,7 +5,7 @@
 #include <netinet/in.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include "./custom-libraries/myLogger/myLogger.h"
+#include "../custom-libraries/myLogger/myLogger.h"
 
 #define PORT 8080
 #define MAX_CLIENTS 5

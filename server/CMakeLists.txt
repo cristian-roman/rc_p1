@@ -8,7 +8,7 @@ add_executable(server main.c)
 
 # Define the libraries and paths
 set(libraries myLogger)
-set(paths custom-libraries/myLogger )
+set(paths ../custom-libraries/myLogger )
 
 # Loop through the libraries
 list(LENGTH libraries num_libraries)
