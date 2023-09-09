@@ -50,3 +50,9 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+
+# cmake-build-folder
+server/cmake-build-debug
+
+# auto-generated-lib
+server/lib
