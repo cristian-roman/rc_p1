@@ -62,7 +62,7 @@ void InitMyLogger()
     Set_CURRENT_LOG_FILE_NAME();
     Set_CURRENT_LOG_FILE_PATH();
 
-    LogInfo("myLogger.h library has been initialized");
+    LogInfo("'myLogger' library has been initialized");
 }
 
 const char * GetCurrentBuildTime()
