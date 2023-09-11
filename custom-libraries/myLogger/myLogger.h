@@ -29,13 +29,10 @@ void Set_CURRENT_LOG_FILE_NAME();
 void Set_CURRENT_LOG_FILE_PATH();
 
 void LogMessage(const char* logLevel, const char* logMessage);
-void LogMessageFromPattern(const char* logLevel, const char* messagePattern, ...);
 
 void LogInfo(const char* message);
-void LogInfoFromPattern(const char* messagePattern, ...);
 
 void LogError(const char* message);
-void LogErrorFromPattern(const char* messagePattern, ...);
 
 void InitMyLogger();
 

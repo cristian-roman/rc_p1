@@ -8,11 +8,9 @@
 #include "server_network.h"
 
 void InitServerSideNetwork(LogMessageFunctionPtr logInfo,
-                           LogMessageFromPatternFunctionPtr logInfoFromPattern,
-                           LogMessageFunctionPtr logError,
-                           LogMessageFromPatternFunctionPtr logErrorFromPattern)
+                           LogMessageFunctionPtr logError)
 {
-    InitLogger(logInfo, logInfoFromPattern, logError, logErrorFromPattern);
+    InitLogger(logInfo, logError);
 
     CreateServerSocket();
 
@@ -28,7 +26,7 @@ void OpenPortForListening()
         NETWORK_OPERATION_STATUS = FAILED;
     }
 
-    NETWORK_LOGGER.LogInfoFromPattern("Server listening on port %d...", PORT);
+    NETWORK_LOGGER.LogInfo("Server listening on port 5050...");
     NETWORK_OPERATION_STATUS = SUCCEEDED;
 }
 
@@ -47,8 +45,7 @@ void BindServerSocket()
     }
     else
     {
-        NETWORK_LOGGER.LogInfoFromPattern("Server application has successfully bound the socket:\n- Accepts IpV4 addresses\n- Running at port: %s\n- Accepts requests coming from any ip address"
-                                          , PORT);
+        NETWORK_LOGGER.LogInfo("Server application has successfully bound the socket:\n- Accepts IpV4 addresses\n- Running at port: 5050\n- Accepts requests coming from any ip address");
         NETWORK_OPERATION_STATUS = SUCCEEDED;
 
     }
@@ -70,15 +67,10 @@ void CreateServerSocket()
 }
 
 void InitLogger( LogMessageFunctionPtr logInfo,
-                 LogMessageFromPatternFunctionPtr logInfoFromPattern,
-                 LogMessageFunctionPtr logError,
-                 LogMessageFromPatternFunctionPtr logErrorFromPattern)
+                 LogMessageFunctionPtr logError)
 {
     NETWORK_LOGGER.LogInfo = logInfo;
-    NETWORK_LOGGER.LogInfoFromPattern = logInfoFromPattern;
-
     NETWORK_LOGGER.LogError = logError;
-    NETWORK_LOGGER.LogErrorFromPattern = logErrorFromPattern;
 
     NETWORK_LOGGER.LogInfo("NETWORK_LOGGER interface implemented by 'myLogger' library");
 }
