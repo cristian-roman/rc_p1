@@ -1,4 +1,11 @@
+//
+// Created by cristian.roman on 9/11/23.
+//
+
 #include "myString.h"
+#include <stdio.h>
+#include <stdarg.h>
+#include <string.h>
 
 void CombineStrings(char* result, int numStrings, ...) {
     sprintf(result, "");
@@ -13,7 +20,7 @@ void CombineStrings(char* result, int numStrings, ...) {
     va_end(args);
 }
 
-void reverse(char str[], int length) {
+void ReverseIntegerDigitOrder(char str[], int length) {
     int start = 0;
     int end = length - 1;
     while (start < end) {
@@ -55,7 +62,7 @@ char* IntegerToString(char* result, int number)
 
     result[i] = '\0'; // Null-terminate string
 
-    reverse(result, i);
+    ReverseIntegerDigitOrder(result, i);
 
     return result;
 }
