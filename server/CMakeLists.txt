@@ -7,8 +7,8 @@ set(CMAKE_C_STANDARD 11)
 add_executable(server main.c)
 
 # Define the libraries and paths
-set(libraries myLogger)
-set(paths ../custom-libraries/myLogger )
+set(libraries myLogger server_network)
+set(paths ../custom-libraries/myLogger libraries/server_network)
 
 # Loop through the libraries
 list(LENGTH libraries num_libraries)
