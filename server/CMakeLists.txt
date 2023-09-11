@@ -7,8 +7,8 @@ set(CMAKE_C_STANDARD 11)
 add_executable(server main.c)
 
 # Define the libraries and paths
-set(libraries myLogger server_network)
-set(paths ../custom-libraries/myLogger libraries/server_network)
+set(libraries myLogger server_network myString)
+set(paths ../custom-libraries/myLogger libraries/server_network ../custom-libraries/myString)
 
 # Loop through the libraries
 list(LENGTH libraries num_libraries)
@@ -26,6 +26,12 @@ foreach(index RANGE ${num_libraries})
 
     # Set the library output directory
     set_target_properties(${library} PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/lib)
+
+    # Check if the library is server_network and link myString
+    if(${library} STREQUAL "server_network")
+        target_link_libraries(${library} PRIVATE myString)
+        target_link_libraries(${library} PRIVATE myLogger)
+    endif()
 
     message(STATUS "Added library ${library}")
 endforeach()

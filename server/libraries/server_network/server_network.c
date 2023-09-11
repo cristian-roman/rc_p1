@@ -3,15 +3,15 @@
 //
 
 #include <sys/socket.h>
-#include <stdlib.h>
 #include <netinet/in.h>
 #include "server_network.h"
+#include "../../../custom-libraries/myString/myString.h"
+#include "../../../custom-libraries/myLogger/myLogger.h"
 
-void InitServerSideNetwork(LogMessageFunctionPtr logInfo,
-                           LogMessageFunctionPtr logError)
+#define MAX_LOG_MESSAGE_ALLOCATION_SIZE 200
+
+void InitServerSideNetwork()
 {
-    InitLogger(logInfo, logError);
-
     CreateServerSocket();
 
     BindServerSocket();
@@ -22,12 +22,20 @@ void InitServerSideNetwork(LogMessageFunctionPtr logInfo,
 void OpenPortForListening()
 {
     if (listen(SERVER_SOCKET, MAX_CLIENTS) == -1) {
-        NETWORK_LOGGER.LogError("Server application shutting down.... [REASON] socket opening for listen failed");
+        LogError("Server application shutting down.... [REASON] socket opening for listen failed");
         NETWORK_OPERATION_STATUS = FAILED;
     }
 
-    NETWORK_LOGGER.LogInfo("Server listening on port 5050...");
+    char* logMessage = (char*) malloc(MAX_LOG_MESSAGE_ALLOCATION_SIZE);
+    char* portAsString = (char*) malloc(10);
+
+    CombineStrings(logMessage, 3, "Server listening on port ", IntegerToString(portAsString, PORT), "...");
+
+    LogInfo(logMessage);
     NETWORK_OPERATION_STATUS = SUCCEEDED;
+
+    free(logMessage);
+    free(portAsString);
 }
 
 void BindServerSocket()
@@ -40,13 +48,25 @@ void BindServerSocket()
 
     if(bind(SERVER_SOCKET, (struct sockaddr*)&server_addr, sizeof(server_addr)) ==1)
     {
-        NETWORK_LOGGER.LogError("Server application shutting down.... [REASON] socket binding failed");
+        LogError("Server application shutting down.... [REASON] socket binding failed");
         NETWORK_OPERATION_STATUS = FAILED;
     }
     else
     {
-        NETWORK_LOGGER.LogInfo("Server application has successfully bound the socket:\n- Accepts IpV4 addresses\n- Running at port: 5050\n- Accepts requests coming from any ip address");
+        char* logMessage = (char*) malloc(MAX_LOG_MESSAGE_ALLOCATION_SIZE);
+        char* portAsString = (char*) malloc(10);
+
+        CombineStrings(logMessage,
+                       3,
+                       "Server application has successfully bound the socket:\n- Accepts IpV4 addresses\n- Running at port: ",
+                       IntegerToString(portAsString, PORT),
+                       "\n- Accepts requests coming from any ip address");
+
+        LogInfo(logMessage);
         NETWORK_OPERATION_STATUS = SUCCEEDED;
+
+        free(logMessage);
+        free(portAsString);
 
     }
 }
@@ -56,23 +76,14 @@ void CreateServerSocket()
     SERVER_SOCKET = socket(AF_INET, SOCK_STREAM, 0);
     if(SERVER_SOCKET == -1)
     {
-        NETWORK_LOGGER.LogError("Server application shutting down.... [REASON] socket creation failed");
+        LogError("Server application shutting down.... [REASON] socket creation failed");
         NETWORK_OPERATION_STATUS = FAILED;
     }
     else
     {
-        NETWORK_LOGGER.LogInfo("Server application has successfully created a socket");
+        LogInfo("Server application has successfully created a socket");
         NETWORK_OPERATION_STATUS = SUCCEEDED;
     }
-}
-
-void InitLogger( LogMessageFunctionPtr logInfo,
-                 LogMessageFunctionPtr logError)
-{
-    NETWORK_LOGGER.LogInfo = logInfo;
-    NETWORK_LOGGER.LogError = logError;
-
-    NETWORK_LOGGER.LogInfo("NETWORK_LOGGER interface implemented by 'myLogger' library");
 }
 
 int WaitForClients()
@@ -84,12 +95,12 @@ int WaitForClients()
     client_socket = accept(SERVER_SOCKET, (struct sockaddr*)&client_addr, &addr_len);
     if(client_socket==-1)
     {
-        NETWORK_LOGGER.LogError("Server application unable to establish connection with client... [REASON] Client acceptance failed");
+        LogError("Server application unable to establish connection with client... [REASON] Client acceptance failed");
         NETWORK_OPERATION_STATUS = FAILED;
     }
     else
     {
-        NETWORK_LOGGER.LogInfo("Server application established a connection with a client. Waiting for commands...");
+        LogInfo("Server application established a connection with a client. Waiting for commands...");
         NETWORK_OPERATION_STATUS = SUCCEEDED;
     }
 

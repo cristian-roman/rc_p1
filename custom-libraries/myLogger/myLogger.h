@@ -24,10 +24,6 @@ char* CURRENT_LOG_FILE_PATH;
 const char* GetCurrentDate();
 const char* GetCurrentBuildTime();
 
-void Set_TODAY_LOG_FOLDER_PATH(); //if it does not exist
-void Set_CURRENT_LOG_FILE_NAME();
-void Set_CURRENT_LOG_FILE_PATH();
-
 void LogMessage(const char* logLevel, const char* logMessage);
 
 void LogInfo(const char* message);
