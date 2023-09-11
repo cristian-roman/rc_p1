@@ -12,8 +12,7 @@
 
 int main() {
     InitMyLogger();
-    InitServerSideNetwork(LogInfo,
-                          LogError);
+    InitServerSideNetwork();
 
     if(NETWORK_OPERATION_STATUS == FAILED)
     {

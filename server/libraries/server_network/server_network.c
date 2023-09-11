@@ -2,13 +2,12 @@
 // Created by root on 9/11/23.
 //
 
+#include "server_network.h"
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include "server_network.h"
+#include <malloc.h>
 #include "../../../custom-libraries/myString/myString.h"
 #include "../../../custom-libraries/myLogger/myLogger.h"
-
-#define MAX_LOG_MESSAGE_ALLOCATION_SIZE 200
 
 void InitServerSideNetwork()
 {
@@ -26,16 +25,11 @@ void OpenPortForListening()
         NETWORK_OPERATION_STATUS = FAILED;
     }
 
-    char* logMessage = (char*) malloc(MAX_LOG_MESSAGE_ALLOCATION_SIZE);
     char* portAsString = (char*) malloc(10);
-
-    CombineStrings(logMessage, 3, "Server listening on port ", IntegerToString(portAsString, PORT), "...");
-
-    LogInfo(logMessage);
-    NETWORK_OPERATION_STATUS = SUCCEEDED;
-
-    free(logMessage);
+    LogInfoFromPattern("Server listening on port %s...", IntegerToString(portAsString, PORT));
     free(portAsString);
+
+    NETWORK_OPERATION_STATUS = SUCCEEDED;
 }
 
 void BindServerSocket()
@@ -53,21 +47,12 @@ void BindServerSocket()
     }
     else
     {
-        char* logMessage = (char*) malloc(MAX_LOG_MESSAGE_ALLOCATION_SIZE);
         char* portAsString = (char*) malloc(10);
-
-        CombineStrings(logMessage,
-                       3,
-                       "Server application has successfully bound the socket:\n- Accepts IpV4 addresses\n- Running at port: ",
-                       IntegerToString(portAsString, PORT),
-                       "\n- Accepts requests coming from any ip address");
-
-        LogInfo(logMessage);
-        NETWORK_OPERATION_STATUS = SUCCEEDED;
-
-        free(logMessage);
+        LogInfoFromPattern("Server application has successfully bound the socket:\n- Accepts IpV4 addresses\n- Running at port: %s\n- Accepts requests coming from any ip address",
+                           IntegerToString(portAsString, PORT));
         free(portAsString);
 
+        NETWORK_OPERATION_STATUS = SUCCEEDED;
     }
 }
 

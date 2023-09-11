@@ -29,8 +29,11 @@ foreach(index RANGE ${num_libraries})
 
     # Check if the library is server_network and link myString
     if(${library} STREQUAL "server_network")
-        target_link_libraries(${library} PRIVATE myString)
         target_link_libraries(${library} PRIVATE myLogger)
+    endif()
+
+    if(${library} STREQUAL "myLogger")
+        target_link_libraries(${library} PRIVATE myString)
     endif()
 
     message(STATUS "Added library ${library}")
