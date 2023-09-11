@@ -13,13 +13,11 @@ typedef void (*LogMessageFromPatternFunctionPtr)(const char* message, ...);
 #define PORT 5050
 #define MAX_CLIENTS 5
 
+#define MAX_LOG_MESSAGE_ALLOCATION_SIZE 65536
 struct ILogger
 {
     LogMessageFunctionPtr LogInfo;
-    LogMessageFromPatternFunctionPtr LogInfoFromPattern;
-
     LogMessageFunctionPtr LogError;
-    LogMessageFromPatternFunctionPtr LogErrorFromPattern;
 
 } NETWORK_LOGGER;
 
@@ -34,9 +32,7 @@ enum OperationStatus NETWORK_OPERATION_STATUS;
 int SERVER_SOCKET;
 
 void InitLogger( LogMessageFunctionPtr LogInfo,
-                 LogMessageFromPatternFunctionPtr LogInfoFromPattern,
-                 LogMessageFunctionPtr LogError,
-                 LogMessageFromPatternFunctionPtr LogErrorFromPattern);
+                 LogMessageFunctionPtr LogError);
 
 void CreateServerSocket();
 
@@ -47,8 +43,6 @@ void OpenPortForListening();
 int WaitForClients();
 
 void InitServerSideNetwork(LogMessageFunctionPtr logInfo,
-                           LogMessageFromPatternFunctionPtr logInfoFromPattern,
-                           LogMessageFunctionPtr logError,
-                           LogMessageFromPatternFunctionPtr logErrorFromPattern);
+                           LogMessageFunctionPtr logError);
 
 #endif //SERVER_SERVER_NETWORK_H
