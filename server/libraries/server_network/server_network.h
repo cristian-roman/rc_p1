@@ -5,6 +5,8 @@
 #ifndef SERVER_SERVER_NETWORK_H
 #define SERVER_SERVER_NETWORK_H
 
+#include <stdbool.h>
+
 typedef void (*LogMessageFunctionPtr)(const char* message);
 typedef void (*LogMessageFromPatternFunctionPtr)(const char* message, ...);
 
@@ -21,6 +23,14 @@ struct ILogger
 
 } NETWORK_LOGGER;
 
+enum OperationStatus
+{
+    FAILED,
+    SUCCEEDED
+};
+
+enum OperationStatus NETWORK_OPERATION_STATUS;
+
 int SERVER_SOCKET;
 
 void InitLogger( LogMessageFunctionPtr LogInfo,
@@ -33,6 +43,8 @@ void CreateServerSocket();
 void BindServerSocket();
 
 void OpenPortForListening();
+
+int WaitForClients();
 
 void InitServerSideNetwork(LogMessageFunctionPtr logInfo,
                            LogMessageFromPatternFunctionPtr logInfoFromPattern,
