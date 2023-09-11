@@ -7,8 +7,8 @@ set(CMAKE_C_STANDARD 11)
 add_executable(server main.c)
 
 # Define the libraries and paths
-set(libraries myLogger server_network myString)
-set(paths ../custom-libraries/myLogger libraries/server_network ../custom-libraries/myString)
+set(libraries myLogger server_network myString system_info)
+set(paths ../custom-libraries/myLogger libraries/server_network ../custom-libraries/myString ../custom-libraries/system_info)
 
 # Loop through the libraries
 list(LENGTH libraries num_libraries)
@@ -33,7 +33,7 @@ foreach(index RANGE ${num_libraries})
     endif()
 
     if(${library} STREQUAL "myLogger")
-        target_link_libraries(${library} PRIVATE myString)
+        target_link_libraries(${library} PRIVATE myString system_info)
     endif()
 
     message(STATUS "Added library ${library}")
