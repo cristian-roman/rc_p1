@@ -10,7 +10,7 @@
 #include <arpa/inet.h>
 #include "../custom-libraries/myLogger/myLogger.h"
 
-#define PORT 8080
+#define PORT 5050
 
 int main() {
     InitMyLogger();
