@@ -3,16 +3,17 @@
 //
 
 #include "myLogger.h"
+
 #include <dirent.h>
-#include <sys/stat.h>
 #include <malloc.h>
 #include <stdarg.h>
 #include <string.h>
+#include <sys/stat.h>
+
 #include "../system_info/system_info.h"
 
-void LogInfoFromPattern(const char* pattern, ...)
-{
-    char* logMessage = (char*) malloc(MAX_LOG_MESSAGE_ALLOCATION_SIZE);
+void LogInfoFromPattern(const char* pattern, ...) {
+    char* logMessage = (char*)malloc(MAX_LOG_MESSAGE_ALLOCATION_SIZE);
     sprintf(logMessage, "");
 
     va_list args;
@@ -24,9 +25,8 @@ void LogInfoFromPattern(const char* pattern, ...)
     free(logMessage);
 }
 
-void LogErrorFromPattern(const char* pattern, ...)
-{
-    char* logMessage = (char*) malloc(MAX_LOG_MESSAGE_ALLOCATION_SIZE);
+void LogErrorFromPattern(const char* pattern, ...) {
+    char* logMessage = (char*)malloc(MAX_LOG_MESSAGE_ALLOCATION_SIZE);
     sprintf(logMessage, "");
 
     va_list args;
@@ -38,9 +38,8 @@ void LogErrorFromPattern(const char* pattern, ...)
     free(logMessage);
 }
 
-void LogMessageFromPattern(const char* logLevel, const char* pattern, ...)
-{
-    char* logMessage = (char*) malloc(MAX_LOG_MESSAGE_ALLOCATION_SIZE);
+void LogMessageFromPattern(const char* logLevel, const char* pattern, ...) {
+    char* logMessage = (char*)malloc(MAX_LOG_MESSAGE_ALLOCATION_SIZE);
     sprintf(logMessage, "");
 
     va_list args;
@@ -52,14 +51,13 @@ void LogMessageFromPattern(const char* logLevel, const char* pattern, ...)
     free(logMessage);
 }
 
-void LogInfoByConcat(int numStrings, ...)
-{
-    char* logMessage = (char*) malloc(MAX_LOG_MESSAGE_ALLOCATION_SIZE);
+void LogInfoByConcat(int numStrings, ...) {
+    char* logMessage = (char*)malloc(MAX_LOG_MESSAGE_ALLOCATION_SIZE);
     sprintf(logMessage, "");
 
     va_list args;
     va_start(args, numStrings);
-    for(int i = 0; i < numStrings; i++) {
+    for (int i = 0; i < numStrings; i++) {
         const char* str = va_arg(args, const char*);
         strcat(logMessage, str);
     }
@@ -70,14 +68,13 @@ void LogInfoByConcat(int numStrings, ...)
     free(logMessage);
 }
 
-void LogErrorByConcat(int numStrings, ...)
-{
-    char* logMessage = (char*) malloc(MAX_LOG_MESSAGE_ALLOCATION_SIZE);
+void LogErrorByConcat(int numStrings, ...) {
+    char* logMessage = (char*)malloc(MAX_LOG_MESSAGE_ALLOCATION_SIZE);
     sprintf(logMessage, "");
 
     va_list args;
     va_start(args, numStrings);
-    for(int i = 0; i < numStrings; i++) {
+    for (int i = 0; i < numStrings; i++) {
         const char* str = va_arg(args, const char*);
         strcat(logMessage, str);
     }
@@ -88,15 +85,13 @@ void LogErrorByConcat(int numStrings, ...)
     free(logMessage);
 }
 
-
-void LogMessageByConcat(const char* logLevel, int numStrings, ...)
-{
-    char* logMessage = (char*) malloc(MAX_LOG_MESSAGE_ALLOCATION_SIZE);
+void LogMessageByConcat(const char* logLevel, int numStrings, ...) {
+    char* logMessage = (char*)malloc(MAX_LOG_MESSAGE_ALLOCATION_SIZE);
     sprintf(logMessage, "");
 
     va_list args;
     va_start(args, numStrings);
-    for(int i = 0; i < numStrings; i++) {
+    for (int i = 0; i < numStrings; i++) {
         const char* str = va_arg(args, const char*);
         strcat(logMessage, str);
     }
@@ -107,22 +102,65 @@ void LogMessageByConcat(const char* logLevel, int numStrings, ...)
     free(logMessage);
 }
 
-void LogInfo(const char* message)
-{
+void LogInfo(const char* message) {
     LogMessage(INFO_LOG_LEVEL, message);
 }
 
-void LogError(const char* message)
-{
+void LogError(const char* message) {
     LogMessage(ERROR_LOG_LEVEL, message);
 }
 
-void LogMessage(const char* logLevel, const char* logMessage)
-{
-    FILE *fp;
+void PrintInfo(const char* message) {
+    printf("\033[1;32;1m");
+    printf("[INFO]\n");
+
+    printf("\033[1;32m");
+    printf("%s\n", message);
+
+    printf("\033[0m");
+}
+
+void PrintInfoFromPattern(const char* message, const char* pattern, ...) {
+    char* logMessage = (char*)malloc(MAX_LOG_MESSAGE_ALLOCATION_SIZE);
+    sprintf(logMessage, "");
+
+    va_list args;
+    va_start(args, pattern);
+    vsnprintf(logMessage, MAX_LOG_MESSAGE_ALLOCATION_SIZE, pattern, args);
+    va_end(args);
+
+    PrintInfo(logMessage);
+    free(logMessage);
+}
+
+void PrintWarrning(const char* message) {
+    printf("\033[1;33;1m");
+    printf("[WARNING]\n");
+
+    printf("\033[1;33m");
+    printf("%s\n", message);
+
+    printf("\033[0m");
+}
+
+void PrintWarrningFromPattern(const char* message, const char* pattern, ...) {
+    char* logMessage = (char*)malloc(MAX_LOG_MESSAGE_ALLOCATION_SIZE);
+    sprintf(logMessage, "");
+
+    va_list args;
+    va_start(args, pattern);
+    vsnprintf(logMessage, MAX_LOG_MESSAGE_ALLOCATION_SIZE, pattern, args);
+    va_end(args);
+
+    PrintWarrning(logMessage);
+    free(logMessage);
+}
+
+void LogMessage(const char* logLevel, const char* logMessage) {
+    FILE* fp;
     fp = fopen(CURRENT_LOG_FILE_PATH, "a+");
 
-    char * buildTime = (char*) malloc(CURRENT_BUILD_TIME_SIZE);
+    char* buildTime = (char*)malloc(CURRENT_BUILD_TIME_SIZE);
     GetCurrentBuildTime(buildTime);
 
     fprintf(fp, "[%s] [%s]:\n%s\n", buildTime, logLevel, logMessage);
@@ -132,14 +170,14 @@ void LogMessage(const char* logLevel, const char* logMessage)
 }
 
 void Set_TODAY_LOG_FOLDER_PATH() {
-    DIR *dir = opendir(LOG_FOLDER_PATH);
+    DIR* dir = opendir(LOG_FOLDER_PATH);
     if (dir) {
         closedir(dir);
     } else {
         mkdir(LOG_FOLDER_PATH, 0777);
     }
 
-    char* todayDate = (char*) malloc(CURRENT_DATE_STRING_SIZE);
+    char* todayDate = (char*)malloc(CURRENT_DATE_STRING_SIZE);
     GetCurrentDate(todayDate);
 
     TODAY_LOG_FOLDER_PATH = malloc(TODAY_LOG_FOLDER_PATH_SIZE);
@@ -155,9 +193,8 @@ void Set_TODAY_LOG_FOLDER_PATH() {
     }
 }
 
-void Set_CURRENT_LOG_FILE_NAME()
-{
-    char * buildTime = (char*) malloc(CURRENT_BUILD_TIME_SIZE);
+void Set_CURRENT_LOG_FILE_NAME() {
+    char* buildTime = (char*)malloc(CURRENT_BUILD_TIME_SIZE);
     GetCurrentBuildTime(buildTime);
 
     CURRENT_LOG_FILE_NAME = malloc(CURRENT_LOG_FILE_NAME_SIZE);
@@ -165,14 +202,12 @@ void Set_CURRENT_LOG_FILE_NAME()
     free(buildTime);
 }
 
-void Set_CURRENT_LOG_FILE_PATH()
-{
+void Set_CURRENT_LOG_FILE_PATH() {
     CURRENT_LOG_FILE_PATH = malloc(CURRENT_LOG_FILE_PATH_SIZE);
     sprintf(CURRENT_LOG_FILE_PATH, "%s/%s", TODAY_LOG_FOLDER_PATH, CURRENT_LOG_FILE_NAME);
 }
 
-void InitMyLogger()
-{
+void InitMyLogger() {
     Set_TODAY_LOG_FOLDER_PATH();
     Set_CURRENT_LOG_FILE_NAME();
     Set_CURRENT_LOG_FILE_PATH();

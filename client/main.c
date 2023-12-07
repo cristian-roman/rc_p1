@@ -15,11 +15,10 @@
 int main() {
     InitMyLogger();
 
-    int client_socket;
     struct sockaddr_in server_addr;
 
     // Create socket
-    client_socket = socket(AF_INET, SOCK_STREAM, 0);
+    const int client_socket = socket(AF_INET, SOCK_STREAM, 0);
     if (client_socket == -1) {
         LogError("Client socket creation failed");
         exit(EXIT_FAILURE);

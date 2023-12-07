@@ -7,7 +7,7 @@
 #include <stdarg.h>
 #include <string.h>
 
-void CombineStrings(char* result, int numStrings, ...) {
+void CombineStrings(char* result, const int numStrings, ...) {
     sprintf(result, "");
 
     va_list args;
@@ -24,7 +24,7 @@ void ReverseIntegerDigitOrder(char str[], int length) {
     int start = 0;
     int end = length - 1;
     while (start < end) {
-        char temp = str[start];
+        const char temp = str[start];
         str[start] = str[end];
         str[end] = temp;
         start++;
@@ -34,8 +34,6 @@ void ReverseIntegerDigitOrder(char str[], int length) {
 
 char* IntegerToString(char* result, int number)
 {
-    int base = 10;
-
     int i = 0;
     int isNegative = 0;
 
@@ -52,7 +50,8 @@ char* IntegerToString(char* result, int number)
     }
 
     while (number != 0) {
-        int rem = number % base;
+        const int base = 10;
+        const int rem = number % base;
         result[i++] = (char)(rem + (int)'0');
         number = number / base;
     }

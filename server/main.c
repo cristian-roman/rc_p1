@@ -1,14 +1,16 @@
-//
-// Created by cristian-roman on 9/7/23.
-//
-
 #include <netinet/in.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <pthread.h>
+#include <stdio.h>
+#include <string.h>
+
 #include "../custom-libraries/myLogger/myLogger.h"
 #include "libraries/server_network/server_network.h"
 
 #define RUNNING_STATE 1
+
+void TreatClientRequest();
 
 int main() {
     InitMyLogger();
@@ -19,48 +21,60 @@ int main() {
         exit(EXIT_FAILURE);
     }
 
+    // ReSharper disable once CppDFAEndlessLoop
     while(RUNNING_STATE)
     {
-        int client_socket = WaitForClients();
-        if(NETWORK_OPERATION_STATUS == FAILED)
-        {
-            LogInfo("Client request denied. Server application will wait for another clients.");
+        WaitForClients();
+        if(NETWORK_OPERATION_STATUS == FAILED) {
+            LogMessage(WARNING_LOG_LEVEL, "Client request denied. Server application will wait for other clients.");
+            PrintWarrning("Client request denied. Server application will wait for other clients.");
             continue;
         }
-        else
+
+        for (int fd = 0; fd <= MAX_FD; fd++)
         {
-            // Fork to handle the client
-            pid_t child_pid = fork();
-
-            if (child_pid == 0) {
-                // This is the child process
-                close(SERVER_SOCKET); // Child doesn't need to listen
-
-                // Handle communication with the client
-                //handle_client(client_socket);
-                sleep(3);
-                char buffer[1024]; // Buffer to store received message
-                ssize_t bytes_received = recv(client_socket, buffer, sizeof(buffer), 0);
-
-                if (bytes_received <= 0) {
-                    LogError("Error receiving message");
-                } else {
-                    buffer[bytes_received] = '\0'; // Add null terminator to make it a string
-                    //LogInfoFromPattern("[Received message from client]: %s", buffer);
-                }
-
-                // Close client socket and exit child process
-                close(client_socket);
-                exit(EXIT_SUCCESS);
-            } else if (child_pid > 0) {
-                // This is the parent process
-                close(client_socket); // Parent doesn't need this socket
-            } else {
-                LogError("Fork failed");
-                exit(EXIT_FAILURE);
+            if (fd != SERVER_SOCKET && FD_ISSET(fd, &READ_FDS))
+            {
+                LogInfoFromPattern("Server connected successfully to a client. Treating client request...");
+                pthread_t thread_id;
+                pthread_create(&thread_id, NULL, (void *) &TreatClientRequest, NULL);
             }
         }
     }
     //close(server_socket);
     //return 0;
+}
+
+void TreatClientRequest()
+{
+    char* client_message = malloc(256 * sizeof(char));
+    const int read_size = read(SERVER_SOCKET, client_message, sizeof(client_message));
+    if (read_size < 0)
+    {
+        LogError("Server application unable to read client request... [REASON] client disconnected.\n");
+        PrintWarrning("Server application unable to read client request... [REASON] client disconnected.\n");
+        NETWORK_OPERATION_STATUS = FAILED;
+        return;
+    }
+
+    LogInfoFromPattern("Server application has successfully read client request. Client request: %s", client_message);
+    PrintInfoFromPattern("Server application has successfully read client request. Client request: %s", client_message);
+
+    free(client_message);
+
+    char* server_response = malloc(256 * sizeof(char));
+    strcpy(server_response, "[Server] Hello client! I have received your request.");
+    const int write_size = write(SERVER_SOCKET, server_response, sizeof(server_response));
+    if (write_size < 0)
+    {
+        LogError("Server application unable to write client response... [REASON] client disconnected.\n");
+        PrintWarrning("Server application unable to write client response... [REASON] client disconnected.\n");
+        NETWORK_OPERATION_STATUS = FAILED;
+        return;
+    }
+
+    LogInfo("Server application has successfully written client response.");
+    PrintInfo("Server application has successfully written client response.");
+
+    free(server_response);
 }
