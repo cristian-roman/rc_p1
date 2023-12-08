@@ -107,7 +107,7 @@ void WaitForClients()
         const int client_socket = accept(SERVER_SOCKET, (struct sockaddr *) &client_addr, &addr_len);
         if(client_socket==-1)
         {
-            LogError("Server application unable to establish connection with client... [REASON] Client acceptance failed");
+            LogError("Server application unable to establish connection with new client... [REASON] Client acceptance failed");
             NETWORK_OPERATION_STATUS = FAILED;
             return ;
         }
@@ -117,7 +117,7 @@ void WaitForClients()
         }
 
         FD_SET(client_socket, &READ_FDS);
-        LogInfo("Server application established a connection with a client. Waiting for commands...");
+        LogInfoFromPattern("Server application found a new client at fd: %d.", client_socket);
         NETWORK_OPERATION_STATUS = SUCCEEDED;
     }
 
