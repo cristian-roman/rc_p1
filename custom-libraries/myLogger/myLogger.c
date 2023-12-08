@@ -43,7 +43,7 @@ void LogErrorFromPattern(const char* pattern, ...) {
     vsnprintf(logMessage, MAX_LOG_MESSAGE_ALLOCATION_SIZE, pattern, args);
     va_end(args);
 
-    LogInfo(logMessage);
+    LogError(logMessage);
     free(logMessage);
 }
 
