@@ -22,12 +22,6 @@ char* CURRENT_LOG_FILE_NAME;
 #define CURRENT_LOG_FILE_PATH_SIZE 50
 char* CURRENT_LOG_FILE_PATH;
 
-void PrintInfo(const char* message);
-void PrintInfoFromPattern(const char* message, const char* pattern, ...);
-
-void PrintWarrning(const char* message);
-void PrintWarrningFromPattern(const char* message, const char* pattern, ...);
-
 void LogMessage(const char* logLevel, const char* logMessage);
 void LogMessageByConcat(const char* logLevel, int numStrings, ...);
 void LogMessageFromPattern(const char* logLevel, const char* pattern, ...);
@@ -35,6 +29,10 @@ void LogMessageFromPattern(const char* logLevel, const char* pattern, ...);
 void LogInfo(const char* message);
 void LogInfoByConcat(int numStrings, ...);
 void LogInfoFromPattern(const char* pattern, ...);
+
+void LogWarning(const char* message);
+void LogWarningByConcat(int numStrings, ...);
+void LogWarningFromPattern(const char* pattern, ...);
 
 void LogError(const char* message);
 void LogErrorByConcat(int numStrings, ...);

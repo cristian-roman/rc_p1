@@ -3,6 +3,7 @@
 //
 
 
+#include <stdio.h>
 #include <netinet/in.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -37,14 +38,19 @@ int main() {
 
     // Now you can send and receive messages with the server using client_socket
     char message[] = "Hello, server!";
-    if (send(client_socket, message, strlen(message), 0) == -1) {
+    if (write(client_socket, message, strlen(message)) == -1) {
         LogError("Sending message failed");
         exit(EXIT_FAILURE);
     }
-    else
-    {
-        LogInfoFromPattern("[Message send to the server]: %s", message);
+    LogInfoFromPattern("[Message send to the server]: %s", message);
+
+    char server_response[256];
+    int bytes;
+    if ((bytes = read(client_socket, server_response, sizeof(server_response))) == -1) {
+        LogError("Receiving message failed");
+        exit(EXIT_FAILURE);
     }
+    LogInfoFromPattern("[Message received from the server]: %s", server_response);
 
     close(client_socket);
     return 0;

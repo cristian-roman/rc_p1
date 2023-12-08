@@ -2,6 +2,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <malloc.h>
+#include <stdlib.h>
 #include <strings.h>
 #include <unistd.h>
 
@@ -15,8 +16,6 @@ void InitServerSideNetwork()
     BindServerSocket();
 
     OpenPortForListening();
-
-    MultiplexSocket();
 }
 
 void OpenPortForListening()
@@ -24,6 +23,7 @@ void OpenPortForListening()
     if (listen(SERVER_SOCKET, MAX_CLIENTS) == -1) {
         LogError("Server application shutting down.... [REASON] socket opening for listen failed");
         NETWORK_OPERATION_STATUS = FAILED;
+        exit(-1);
     }
 
     char* portAsString = malloc(10);
@@ -46,16 +46,14 @@ void BindServerSocket()
     {
         LogError("Server application shutting down.... [REASON] socket binding failed");
         NETWORK_OPERATION_STATUS = FAILED;
+        exit(-1);
     }
-    else
-    {
-        char* portAsString = malloc(10);
-        LogInfoFromPattern("Server application has successfully bound the socket:\n- Accepts IpV4 addresses\n- Running at port: %s\n- Accepts requests coming from any ip address",
-                           IntegerToString(portAsString, PORT));
-        free(portAsString);
+    char* portAsString = malloc(10);
+    LogInfoFromPattern("Server application has successfully set the socket:\n- Accepts IpV4 addresses\n- Can be found at port: %s\n- Accepts requests coming from any ip address",
+                       IntegerToString(portAsString, PORT));
+    free(portAsString);
 
-        NETWORK_OPERATION_STATUS = SUCCEEDED;
-    }
+    NETWORK_OPERATION_STATUS = SUCCEEDED;
 }
 
 void CreateServerSocket()
@@ -65,19 +63,19 @@ void CreateServerSocket()
     {
         LogError("Server application shutting down.... [REASON] socket creation failed");
         NETWORK_OPERATION_STATUS = FAILED;
-        return;
+        exit(-1);
     }
 
-    if(setsockopt(SERVER_SOCKET, SOL_SOCKET, SO_REUSEADDR, &(int){ 1 }, sizeof(int)) == 0)
+    if(setsockopt(SERVER_SOCKET, SOL_SOCKET, SO_REUSEADDR, &(int){ 1 }, sizeof(int)))
     {
-        LogError("Server application shutting down.... [REASON] socket creation failed");
+        LogError("Server application shutting down.... [REASON] socket option settings failed");
         NETWORK_OPERATION_STATUS = FAILED;
+        exit(-1);
     }
-    else
-    {
-        LogInfo("Server application has successfully created a socket");
-        NETWORK_OPERATION_STATUS = SUCCEEDED;
-    }
+
+    LogInfo("Server application has successfully created a socket");
+    MAX_FD = SERVER_SOCKET;
+    NETWORK_OPERATION_STATUS = SUCCEEDED;
 }
 
 void MultiplexSocket()
@@ -85,30 +83,27 @@ void MultiplexSocket()
     FD_ZERO(&READ_FDS);
     FD_SET(SERVER_SOCKET, &READ_FDS);
 
-    TIMEOUT.tv_sec = 0;
+    TIMEOUT.tv_sec = 1;
     TIMEOUT.tv_usec = 0;
-
-    MAX_FD = SERVER_SOCKET;
 }
 
 void WaitForClients()
 {
-    struct sockaddr_in client_addr;
-    socklen_t addr_len;
 
-    bcopy((char*) &READ_FDS, (char*) &WRITE_FDS, sizeof(READ_FDS));
-    if(select(MAX_FD + 1, &READ_FDS, NULL, NULL, &TIMEOUT) == -1)
+    MultiplexSocket();
+
+    if(select(MAX_FD + 1, &READ_FDS, NULL, NULL, &TIMEOUT) < 0)
     {
         LogError("Server application shutting down.... [REASON] socket multiplexing failed");
         NETWORK_OPERATION_STATUS = FAILED;
+        exit(-1);
     }
 
     if(FD_ISSET(SERVER_SOCKET, &READ_FDS))
     {
-        addr_len = sizeof(client_addr);
-        bzero(&client_addr, sizeof(client_addr));
+        struct sockaddr_in client_addr;
+        socklen_t addr_len = sizeof(client_addr);
 
-        PrintInfo("Server application is waiting for clients...");
         const int client_socket = accept(SERVER_SOCKET, (struct sockaddr *) &client_addr, &addr_len);
         if(client_socket==-1)
         {

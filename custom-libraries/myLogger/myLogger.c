@@ -1,7 +1,3 @@
-//
-// Created by cristian.roman on 9/9/23.
-//
-
 #include "myLogger.h"
 
 #include <dirent.h>
@@ -13,7 +9,7 @@
 #include "../system_info/system_info.h"
 
 void LogInfoFromPattern(const char* pattern, ...) {
-    char* logMessage = (char*)malloc(MAX_LOG_MESSAGE_ALLOCATION_SIZE);
+    char* logMessage = malloc(MAX_LOG_MESSAGE_ALLOCATION_SIZE);
     sprintf(logMessage, "");
 
     va_list args;
@@ -25,8 +21,21 @@ void LogInfoFromPattern(const char* pattern, ...) {
     free(logMessage);
 }
 
+void LogWarningFromPattern(const char* pattern, ...) {
+    char* logMessage = malloc(MAX_LOG_MESSAGE_ALLOCATION_SIZE);
+    sprintf(logMessage, "");
+
+    va_list args;
+    va_start(args, pattern);
+    vsnprintf(logMessage, MAX_LOG_MESSAGE_ALLOCATION_SIZE, pattern, args);
+    va_end(args);
+
+    LogWarning(logMessage);
+    free(logMessage);
+}
+
 void LogErrorFromPattern(const char* pattern, ...) {
-    char* logMessage = (char*)malloc(MAX_LOG_MESSAGE_ALLOCATION_SIZE);
+    char* logMessage = malloc(MAX_LOG_MESSAGE_ALLOCATION_SIZE);
     sprintf(logMessage, "");
 
     va_list args;
@@ -39,7 +48,7 @@ void LogErrorFromPattern(const char* pattern, ...) {
 }
 
 void LogMessageFromPattern(const char* logLevel, const char* pattern, ...) {
-    char* logMessage = (char*)malloc(MAX_LOG_MESSAGE_ALLOCATION_SIZE);
+    char* logMessage = malloc(MAX_LOG_MESSAGE_ALLOCATION_SIZE);
     sprintf(logMessage, "");
 
     va_list args;
@@ -51,8 +60,8 @@ void LogMessageFromPattern(const char* logLevel, const char* pattern, ...) {
     free(logMessage);
 }
 
-void LogInfoByConcat(int numStrings, ...) {
-    char* logMessage = (char*)malloc(MAX_LOG_MESSAGE_ALLOCATION_SIZE);
+void LogInfoByConcat(const int numStrings, ...) {
+    char* logMessage = malloc(MAX_LOG_MESSAGE_ALLOCATION_SIZE);
     sprintf(logMessage, "");
 
     va_list args;
@@ -68,8 +77,25 @@ void LogInfoByConcat(int numStrings, ...) {
     free(logMessage);
 }
 
-void LogErrorByConcat(int numStrings, ...) {
-    char* logMessage = (char*)malloc(MAX_LOG_MESSAGE_ALLOCATION_SIZE);
+void LogWarningByConcat(const int numStrings, ...) {
+    char* logMessage = malloc(MAX_LOG_MESSAGE_ALLOCATION_SIZE);
+    sprintf(logMessage, "");
+
+    va_list args;
+    va_start(args, numStrings);
+    for (int i = 0; i < numStrings; i++) {
+        const char* str = va_arg(args, const char*);
+        strcat(logMessage, str);
+    }
+
+    va_end(args);
+
+    LogWarning(logMessage);
+    free(logMessage);
+}
+
+void LogErrorByConcat(const int numStrings, ...) {
+    char* logMessage = malloc(MAX_LOG_MESSAGE_ALLOCATION_SIZE);
     sprintf(logMessage, "");
 
     va_list args;
@@ -104,61 +130,33 @@ void LogMessageByConcat(const char* logLevel, int numStrings, ...) {
 
 void LogInfo(const char* message) {
     LogMessage(INFO_LOG_LEVEL, message);
+    printf("\033[1;32m");
+    printf("[INFO]\n");
+    printf("\033[0;32m");
+    printf("%s\n", message);
+    printf("\033[0m");
+}
+
+void LogWarning(const char* message) {
+    LogMessage(WARNING_LOG_LEVEL, message);
+    printf("\033[1;33m");
+    printf("[WARNING]\n");
+    printf("\033[0;33m");
+    printf("%s\n", message);
+    printf("\033[0m");
 }
 
 void LogError(const char* message) {
     LogMessage(ERROR_LOG_LEVEL, message);
-}
-
-void PrintInfo(const char* message) {
-    printf("\033[1;32;1m");
-    printf("[INFO]\n");
-
-    printf("\033[1;32m");
+    printf("\033[1;31m");
+    printf("[ERROR]\n");
+    printf("\033[0;31m");
     printf("%s\n", message);
-
     printf("\033[0m");
-}
-
-void PrintInfoFromPattern(const char* message, const char* pattern, ...) {
-    char* logMessage = (char*)malloc(MAX_LOG_MESSAGE_ALLOCATION_SIZE);
-    sprintf(logMessage, "");
-
-    va_list args;
-    va_start(args, pattern);
-    vsnprintf(logMessage, MAX_LOG_MESSAGE_ALLOCATION_SIZE, pattern, args);
-    va_end(args);
-
-    PrintInfo(logMessage);
-    free(logMessage);
-}
-
-void PrintWarrning(const char* message) {
-    printf("\033[1;33;1m");
-    printf("[WARNING]\n");
-
-    printf("\033[1;33m");
-    printf("%s\n", message);
-
-    printf("\033[0m");
-}
-
-void PrintWarrningFromPattern(const char* message, const char* pattern, ...) {
-    char* logMessage = (char*)malloc(MAX_LOG_MESSAGE_ALLOCATION_SIZE);
-    sprintf(logMessage, "");
-
-    va_list args;
-    va_start(args, pattern);
-    vsnprintf(logMessage, MAX_LOG_MESSAGE_ALLOCATION_SIZE, pattern, args);
-    va_end(args);
-
-    PrintWarrning(logMessage);
-    free(logMessage);
 }
 
 void LogMessage(const char* logLevel, const char* logMessage) {
-    FILE* fp;
-    fp = fopen(CURRENT_LOG_FILE_PATH, "a+");
+    FILE* fp = fopen(CURRENT_LOG_FILE_PATH, "a+");
 
     char* buildTime = (char*)malloc(CURRENT_BUILD_TIME_SIZE);
     GetCurrentBuildTime(buildTime);
