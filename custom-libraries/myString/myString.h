@@ -7,5 +7,6 @@
 
 void CombineStrings(char* result, int numStrings, ...);
 char* IntegerToString(char* result, int number);
+char** SplitString(char* str, char delimiter, int numTokens);
 
 #endif //SERVER_MYSTRING_H

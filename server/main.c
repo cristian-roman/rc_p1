@@ -5,9 +5,11 @@
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
+#include <stdlib.h>
 
 #include "../custom-libraries/myLogger/myLogger.h"
 #include "libraries/server_network/server_network.h"
+#include "../custom-libraries/myString/myString.h"
 
 #define RUNNING_STATE 1
 
@@ -58,23 +60,24 @@ void* TreatClientRequest(void* arg)
 {
     const int client_socket = *(int*)arg;
     free(arg);
-    char* client_message = malloc(256 * sizeof(char));
-    const int read_size = read(client_socket, client_message, 256);
+
+    const int client_message_length = 512;
+    char* client_message = malloc(client_message_length);
+
+    const int read_size = read(client_socket, client_message, client_message_length);
     if (read_size < 0)
     {
-        LogErrorFromPattern("[Server<-client:%d] unable to read client request... [REASON] client abruptly disconnected", client_socket);
+        LogErrorFromPattern("[Server<-client:%d] unable to read client message... [REASON] client abruptly disconnected", client_socket);
         NETWORK_OPERATION_STATUS = FAILED;
         close(client_socket);
+        free(client_message);
         return (void*)-1;
     }
-    if(strcmp(client_message, "Hello, server!") == 0) {
-        clientsTreatedCount++;
-    }
-    LogInfoFromPattern("[Server<-client:%d] successfully read client request. Client request: %s", client_socket, client_message);
+    LogInfoFromPattern("[Server<-client:%d] successfully read client message. Client message: %s", client_socket, client_message);
+    char** tokens = SplitString(client_message, ' ', 2);
     free(client_message);
 
-    char* server_response = malloc(256 * sizeof(char));
-    strcpy(server_response, "[Server] Hello client! I have received your request.\n\0");
+    const char* server_response = "[Server] Hello client! I have received the url and the depth. Trying to perform resources download...";
     const int write_size = write(client_socket, server_response, strlen(server_response));
     if (write_size < 0)
     {
@@ -85,7 +88,8 @@ void* TreatClientRequest(void* arg)
     }
 
     LogInfoFromPattern("[Server->client:%d] successfully written response to client.", client_socket);
-    free(server_response);
+
+    clientsTreatedCount++;
 
     return 0;
 }

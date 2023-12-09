@@ -5,6 +5,7 @@
 #include <string.h>
 #include <arpa/inet.h>
 #include "../custom-libraries/myLogger/myLogger.h"
+#include "../custom-libraries/myString/myString.h"
 
 #define IP_ADDRESS "127.0.0.1"
 #define PORT 5050
@@ -33,6 +34,27 @@ int connect_to_server()
     return client_socket;
 }
 
+void read_url(char* url, const int url_size) {
+    char c;
+    int characters_read = 0;
+    bzero(url, url_size);
+    while(c != ' ' && c != '\n') {
+        c = getchar();
+        strncat(url, &c, 1);
+        characters_read++;
+        if (characters_read == url_size) {
+            LogWarning("URL is too long");
+            break;
+        }
+    }
+
+    while(c != '\n') {
+        c = getchar();
+    }
+
+    url[strcspn(url, "\n")] = '\0';
+}
+
 int main(const int argc, char** argv) {
 
     InitMyLogger();
@@ -45,15 +67,11 @@ int main(const int argc, char** argv) {
     if (strcmp(argv[1], "--single-client") == 0) {
         printf("Please provide two parameters separated by enter(new line):\n- a string representing a valid URL\n- and a positive number representing the depth of the search: \n");
 
-        char url[256];
+        const int url_size = 256;
+        char* url = malloc(url_size);
         int depth;
 
-        if (fgets(url, sizeof(url), stdin) == NULL) {
-            LogError("Failed to read URL");
-            exit(EXIT_FAILURE);
-        }
-
-        url[strcspn(url, "\n")] = '\0';
+        read_url(url, url_size);
 
         if (scanf("%d", &depth) != 1) {
             LogError("Failed to read depth");
@@ -64,13 +82,30 @@ int main(const int argc, char** argv) {
         LogInfoFromPattern("Depth received: %d\n", depth);
 
         const int client_socket = connect_to_server();
-        int bytes = write(client_socket, url, strlen(url) + 1); // Include the null terminator
+
+        const int depth_size = 10;
+        char* depthAsString = malloc(depth_size);
+        bzero(depthAsString, depth_size);
+        IntegerToString(depthAsString, depth);
+
+
+        const int message_size = 512;
+        char* message = malloc(message_size);
+        bzero(message, message_size);
+
+        CombineStrings(message, 3, url, " ", depthAsString);
+        free(depthAsString);
+        free(url);
+
+        int bytes = write(client_socket, message, strlen(message) + 1);
         if (bytes == -1) {
             LogError("Sending message failed");
             close(client_socket);
+            free(message);
             exit(EXIT_FAILURE);
         }
-        LogInfoFromPattern("[Message sent to the server]: %s", url);
+        LogInfoFromPattern("[Message sent to the server]: %s", message);
+        free(message);
 
         char server_response[256];
         bytes = read(client_socket, server_response, sizeof(server_response));

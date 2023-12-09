@@ -1,10 +1,7 @@
-//
-// Created by cristian.roman on 9/11/23.
-//
-
 #include "myString.h"
 #include <stdio.h>
 #include <stdarg.h>
+#include <stdlib.h>
 #include <string.h>
 
 void CombineStrings(char* result, const int numStrings, ...) {
@@ -20,7 +17,7 @@ void CombineStrings(char* result, const int numStrings, ...) {
     va_end(args);
 }
 
-void ReverseIntegerDigitOrder(char str[], int length) {
+void ReverseIntegerDigitOrder(char str[], const int length) {
     int start = 0;
     int end = length - 1;
     while (start < end) {
@@ -62,6 +59,22 @@ char* IntegerToString(char* result, int number)
     result[i] = '\0'; // Null-terminate string
 
     ReverseIntegerDigitOrder(result, i);
+
+    return result;
+}
+
+char** SplitString(char* str, const char delimiter, const int numTokens) {
+    char** result = malloc(numTokens * sizeof(char*));
+    bzero(result, numTokens * sizeof(char*));
+    const char* token = strtok(str, &delimiter);
+    int i = 0;
+    while (token != NULL) {
+        result[i] = malloc(strlen(token) + 1);
+        bzero(result[i], strlen(token) + 1);
+        strcpy(result[i], token);
+        token = strtok(NULL, &delimiter);
+        i++;
+    }
 
     return result;
 }
