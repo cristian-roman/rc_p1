@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <arpa/inet.h>
+#include <regex.h>
 #include "../custom-libraries/myLogger/myLogger.h"
 #include "../custom-libraries/myString/myString.h"
 
@@ -53,7 +54,36 @@ void read_url(char* url, const int url_size) {
     }
 
     url[strcspn(url, "\n")] = '\0';
+
+    const size_t url_length = strlen(url);
+    if (url_length > 0 && url[url_length - 1] == '/') {
+        url[url_length - 1] = '\0';
+    }
 }
+
+int is_url_valid(char* url) {
+    const char* valid_url_pattern = "^(http|https)://([a-zA-Z0-9-]+([.][a-zA-Z-]+)+)([/][a-zA-Z0-9-]+)*[/]?$";
+
+    regex_t regex;
+    const int reti = regcomp(&regex, valid_url_pattern, REG_EXTENDED);
+    if (reti) {
+        LogWarning("Could not compile regex. Not checking URL validity before sending it to the server");
+        return -1;
+    }
+
+    const int match = regexec(&regex, url, 0, NULL, 0);
+    if (match == 0) {
+        LogInfoFromPattern("URL %s is valid", url);
+        return 1;
+    }
+    if (match == REG_NOMATCH) {
+        LogErrorFromPattern("URL %s is not valid", url);
+        return 0;
+    }
+    LogWarning("Could not compile regex. Not checking URL validity before sending it to the server");
+    return -1;
+}
+
 
 int main(const int argc, char** argv) {
 
@@ -78,6 +108,20 @@ int main(const int argc, char** argv) {
             exit(EXIT_FAILURE);
         }
         getchar();
+
+        while(is_url_valid(url) == 0) {
+            printf("Type a valid URL:\n");
+            read_url(url, url_size);
+        }
+
+        while(depth < 1) {
+            LogWarningFromPattern("Depth: %d must be a positive number. Type a positive number:", depth);
+
+            if (scanf("%d", &depth) != 1) {
+                LogError("Failed to read depth");
+                exit(EXIT_FAILURE);
+            }
+        }
         LogInfoFromPattern("Depth received: %d\n", depth);
         LogInfoFromPattern("URL received: %s\n", url);
 

@@ -10,6 +10,7 @@
 #include "../custom-libraries/myLogger/myLogger.h"
 #include "libraries/server_network/server_network.h"
 #include "../custom-libraries/myString/myString.h"
+#include "libraries/web_handler/web_handler.h"
 
 #define RUNNING_STATE 1
 
@@ -77,17 +78,30 @@ void* TreatClientRequest(void* arg)
     char** tokens = SplitString(client_message, ' ', 2);
     free(client_message);
 
-    const char* server_response = "[Server] Hello client! I have received the url and the depth. Trying to perform resources download...";
-    const int write_size = write(client_socket, server_response, strlen(server_response));
+    const int server_response_length = 512;
+    char* server_response = malloc(server_response_length);
+
+    bzero(server_response, server_response_length);
+    strcpy(server_response, "[Server] Hello client! I have received the url and the depth. Trying to perform resources download...");
+
+    int write_size = write(client_socket, server_response, strlen(server_response));
     if (write_size < 0)
     {
         LogErrorFromPattern("[Server->client:%d] unable to write client response... [REASON] client abrouptly disconnected", client_socket);
         NETWORK_OPERATION_STATUS = FAILED;
+        free(server_response);
         close(client_socket);
         return (void*)-1;
     }
 
     LogInfoFromPattern("[Server->client:%d] successfully written response to client.", client_socket);
+    bzero(server_response, server_response_length);
+
+    int depth = atoi(tokens[1]);
+
+    char* url = malloc(strlen(tokens[0]) + 1);
+    strcpy(url, tokens[0]);
+    free(tokens);
 
     clientsTreatedCount++;
 
