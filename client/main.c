@@ -69,17 +69,17 @@ int main(const int argc, char** argv) {
 
         const int url_size = 256;
         char* url = malloc(url_size);
-        int depth;
 
         read_url(url, url_size);
 
+        int depth;
         if (scanf("%d", &depth) != 1) {
             LogError("Failed to read depth");
             exit(EXIT_FAILURE);
         }
-
-        LogInfoFromPattern("URL received: %s\n", url);
+        getchar();
         LogInfoFromPattern("Depth received: %d\n", depth);
+        LogInfoFromPattern("URL received: %s\n", url);
 
         const int client_socket = connect_to_server();
 
