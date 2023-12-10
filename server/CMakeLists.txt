@@ -37,7 +37,7 @@ foreach(index RANGE ${num_libraries})
     endif()
 
     if(${library} STREQUAL "web_handler")
-        target_link_libraries(${library} PRIVATE myLogger)
+        target_link_libraries(${library} PRIVATE myLogger myString curl)
     endif()
 
     message(STATUS "Added library ${library}")

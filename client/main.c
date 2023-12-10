@@ -4,7 +4,6 @@
 #include <unistd.h>
 #include <string.h>
 #include <arpa/inet.h>
-#include <regex.h>
 #include "../custom-libraries/myLogger/myLogger.h"
 #include "../custom-libraries/myString/myString.h"
 
@@ -57,31 +56,23 @@ void read_url(char* url, const int url_size) {
 
     const size_t url_length = strlen(url);
     if (url_length > 0 && url[url_length - 1] == '/') {
-        url[url_length - 1] = '\0';
+        LogWarning("Trailing slash detected in URL. If your intention was without the trailing slash, please restart the client and type the URL again without the trailing slash");
     }
 }
 
 int is_url_valid(char* url) {
-    const char* valid_url_pattern = "^(http|https)://([a-zA-Z0-9-]+([.][a-zA-Z-]+)+)([/][a-zA-Z0-9-]+)*[/]?$";
-
-    regex_t regex;
-    const int reti = regcomp(&regex, valid_url_pattern, REG_EXTENDED);
-    if (reti) {
-        LogWarning("Could not compile regex. Not checking URL validity before sending it to the server");
-        return -1;
+    // Check if the URL starts with "http://"
+    if (strncmp(url, "http://", 7) == 0) {
+        return 1;  // Valid URL with "http://"
     }
 
-    const int match = regexec(&regex, url, 0, NULL, 0);
-    if (match == 0) {
-        LogInfoFromPattern("URL %s is valid", url);
-        return 1;
+    // Check if the URL starts with "https://"
+    if (strncmp(url, "https://", 8) == 0) {
+        return 1;  // Valid URL with "https://"
     }
-    if (match == REG_NOMATCH) {
-        LogErrorFromPattern("URL %s is not valid", url);
-        return 0;
-    }
-    LogWarning("Could not compile regex. Not checking URL validity before sending it to the server");
-    return -1;
+
+    // URL does not start with "http://" or "https://"
+    return 0;
 }
 
 

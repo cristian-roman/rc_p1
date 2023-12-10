@@ -103,6 +103,8 @@ void* TreatClientRequest(void* arg)
     strcpy(url, tokens[0]);
     free(tokens);
 
+    download_page(url, strlen(url), depth);
+
     clientsTreatedCount++;
 
     return 0;
