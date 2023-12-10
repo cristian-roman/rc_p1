@@ -63,7 +63,19 @@ char* IntegerToString(char* result, int number)
     return result;
 }
 
-char** SplitString(char* str, const char delimiter, const int numTokens) {
+int GetNumberOfTokens(const char* str, const char delimiter) {
+    int result = 0;
+    for(int i = 0; i < strlen(str); i++) {
+        if(str[i] == delimiter) {
+            result++;
+        }
+    }
+
+    return result;
+}
+
+char** SplitString(char* str, const char delimiter, int numTokens) {
+
     char** result = malloc(numTokens * sizeof(char*));
     bzero(result, numTokens * sizeof(char*));
     const char* token = strtok(str, &delimiter);

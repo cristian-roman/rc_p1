@@ -9,30 +9,89 @@
 #include <sys/stat.h>
 #define DOWNLOAD_LOCATION "downloads"
 
-void create_downloads_folder_if_not_exists()
+char* create_folder_if_not_exists(const char* current_path, char* folder_name)
 {
     struct stat st = {0};
-    if (stat(DOWNLOAD_LOCATION, &st) == -1)
+    char* path = malloc(strlen(current_path) + strlen(folder_name) + 2);
+    CombineStrings(path, 3, current_path, "/", folder_name);
+
+    if (stat(path, &st) == -1)
     {
-        LogInfo("Downloads folder does not exist. Creating it...");
-        if(mkdir(DOWNLOAD_LOCATION, 0700) == -1)
+        LogInfoFromPattern("'%s' folder does not exist at path: %s. Creating it...", folder_name, current_path);
+        if(mkdir(path, 0700) == -1)
         {
             LogError("Failed to create downloads folder");
+            free(path);
             exit(EXIT_FAILURE);
         }
-        LogInfo("Folder created successfully");
+        LogInfoFromPattern("Folder %s created successfully", folder_name);
+        return path;
     }
-    else
+    LogInfoFromPattern("Foder '%s' already exists at path: %s", folder_name, current_path);
+    return path;
+}
+
+char* CreatePageHierarchy(const char* url, const char* download_path, const char* root_path) {
+
+    char* url_without_protocol = malloc(strlen(url) + 1);
+    strcpy(url_without_protocol, url);
+    url_without_protocol = strstr(url_without_protocol, "://") + 3;
+
+    const int number_of_tokens = GetNumberOfTokens(url_without_protocol, '/');
+    char** tokens = SplitString(url_without_protocol, '/', number_of_tokens);
+
+    char* path = malloc(strlen(download_path) + 1);
+    bzero(path, strlen(download_path) + 1);
+    strcpy(path, download_path);
+
+    char* folder_name = tokens[0];
+    root_path = create_folder_if_not_exists(path, folder_name);
+    free(folder_name);
+    strcpy(path, root_path);
+
+    for(int i = 1; i < number_of_tokens; i++)
     {
-        LogInfo("Downloads folder already exists");
+        folder_name = tokens[i];
+        char* new_path = create_folder_if_not_exists(path, folder_name);
+        free(folder_name);
+        path = new_path;
     }
+
+    return path;
+}
+
+char* extractExtension(const char* url) {
+    // Find the position of the first '/' after "://"
+    const char* pathStart = strstr(url, "://");
+    if (pathStart == NULL) {
+        LogError("Invalid URL format");
+        exit(-1);
+    }
+
+    pathStart += 3; // Move past "://"
+
+    // Find the position of the first '/' after the domain
+    const char* pathEnd = strrchr(pathStart, '/');
+    if (pathEnd == NULL) {
+        LogError("Invalid URL format");
+        exit(-1);
+    }
+
+    // Find the position of the last '.' in the path
+    char* extensionStart = strrchr(pathEnd, '.');
+    if (extensionStart == NULL || extensionStart < pathEnd) {
+        // No '.' found or it's before the last '/'
+        return ".html"; // Default extension
+    }
+
+    return extensionStart;
 }
 
 static size_t write_data(const void *ptr, const size_t size, const size_t nmemb, FILE *stream) {
     return fwrite(ptr, size, nmemb, stream);
 }
 
-void download_page(char* url, int url_size, int depth)
+void download_resource(char* url, int url_size, int depth)
 {
     LogInfoFromPattern("Downloading page from URL: %s", url);
 
@@ -44,13 +103,24 @@ void download_page(char* url, int url_size, int depth)
         curl_global_cleanup();
         return;
     }
-    create_downloads_folder_if_not_exists();
-
-    char* encoded_url = curl_easy_escape(curl, url, 0);
-
-    char* file_path = malloc(strlen(DOWNLOAD_LOCATION) + strlen(encoded_url) + 10);
-    CombineStrings(file_path, 4, "./", DOWNLOAD_LOCATION, "/", encoded_url);
-    LogInfoFromPattern("File path to save page is: %s", file_path);
+    char* download_path = create_folder_if_not_exists(".", DOWNLOAD_LOCATION);
+    const char* root_path = NULL;
+    char* page_path = CreatePageHierarchy(url, download_path, root_path);
+    free(download_path);
+    const char* extension = extractExtension(url);
+    char* fileNameWithExtension = malloc(20);
+    if(strcmp(extension, ".html") == 0)
+    {
+        strcpy(fileNameWithExtension, "index.html");
+    }
+    else
+    {
+        strcpy(fileNameWithExtension, "resource");
+        strcat(fileNameWithExtension, extension);
+    }
+    char* file_path = malloc(strlen(page_path) + strlen(fileNameWithExtension) + 2);
+    CombineStrings(file_path, 3, page_path, "/", fileNameWithExtension);
+    LogInfoFromPattern("Downloading resource at path: %s", file_path);
 
 
     //write something to file
