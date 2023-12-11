@@ -3,11 +3,20 @@
 #include <netinet/in.h>
 #include <malloc.h>
 #include <stdlib.h>
+#include <string.h>
 #include <strings.h>
 #include <unistd.h>
 
-#include "../../../custom-libraries/myString/myString.h"
-#include "../../../custom-libraries/myLogger/myLogger.h"
+#include "../../../custom_libraries/custom_c_logger/custom_c_logger.h"
+#include "../../../custom_libraries/custom_c_string/custom_c_string.h"
+
+enum OperationStatus NETWORK_OPERATION_STATUS;
+
+int SERVER_SOCKET;
+int MAX_FD;
+fd_set READ_FDS;
+fd_set WRITE_FDS;
+struct timeval TIMEOUT;
 
 void InitServerSideNetwork()
 {
@@ -26,10 +35,10 @@ void OpenPortForListening()
         exit(-1);
     }
 
-    char* portAsString = malloc(10);
-    LogInfoFromPattern("Server listening on port %s...", IntegerToString(portAsString, PORT));
-    free(portAsString);
-
+    const char* pattern = "Server application has successfully opened the socket for listening on port %d";
+    char* messageFromPattern = GetStringFromPattern(pattern, strlen(pattern) + 10, PORT);
+    LogInfo(messageFromPattern);
+    free(messageFromPattern);
     NETWORK_OPERATION_STATUS = SUCCEEDED;
 }
 
@@ -48,10 +57,11 @@ void BindServerSocket()
         NETWORK_OPERATION_STATUS = FAILED;
         exit(-1);
     }
-    char* portAsString = malloc(10);
-    LogInfoFromPattern("Server application has successfully set the socket:\n- Accepts IpV4 addresses\n- Can be found at port: %s\n- Accepts requests coming from any ip address",
-                       IntegerToString(portAsString, PORT));
-    free(portAsString);
+
+    const char* pattern = "Server application has successfully set the socket:\n- Accepts IpV4 addresses\n- Can be found at port: %d\n- Accepts requests coming from any ip address";
+    char* messageFromPattern = GetStringFromPattern(pattern, strlen(pattern) + 10, PORT);
+    LogInfo(messageFromPattern);
+    free(messageFromPattern);
 
     NETWORK_OPERATION_STATUS = SUCCEEDED;
 }
@@ -117,7 +127,10 @@ void WaitForClients()
         }
 
         FD_SET(client_socket, &READ_FDS);
-        LogInfoFromPattern("Server application found a new client at fd: %d.", client_socket);
+        const char* pattern = "Server application found a new client at fd: %d.";
+        char* messageFromPattern = GetStringFromPattern(pattern, strlen(pattern) + 10, client_socket);
+        LogInfo(messageFromPattern);
+        free(messageFromPattern);
         NETWORK_OPERATION_STATUS = SUCCEEDED;
     }
 

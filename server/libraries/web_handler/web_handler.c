@@ -1,6 +1,6 @@
 #include "web_handler.h"
-#include "../../../custom-libraries/myLogger/myLogger.h"
-#include "../../../custom-libraries/myString/myString.h"
+#include "../../../custom-libraries/custom_c_logger/custom_c_logger.h"
+#include "../../../custom-libraries/custom_c_string/custom_c_string.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -12,8 +12,8 @@
 char* create_folder_if_not_exists(const char* current_path, char* folder_name)
 {
     struct stat st = {0};
-    char* path = malloc(strlen(current_path) + strlen(folder_name) + 2);
-    CombineStrings(path, 3, current_path, "/", folder_name);
+    const int total_size = strlen(current_path) + strlen(folder_name) + 2;
+    char* path = CombineStrings(3, total_size, current_path, "/", folder_name);
 
     if (stat(path, &st) == -1)
     {
@@ -118,8 +118,8 @@ void download_resource(char* url, int url_size, int depth)
         strcpy(fileNameWithExtension, "resource");
         strcat(fileNameWithExtension, extension);
     }
-    char* file_path = malloc(strlen(page_path) + strlen(fileNameWithExtension) + 2);
-    CombineStrings(file_path, 3, page_path, "/", fileNameWithExtension);
+    const int file_path_size = strlen(page_path) + strlen(fileNameWithExtension) + 2;
+    char* file_path = CombineStrings(3,file_path_size, page_path, "/", fileNameWithExtension);
     LogInfoFromPattern("Downloading resource at path: %s", file_path);
 
 
