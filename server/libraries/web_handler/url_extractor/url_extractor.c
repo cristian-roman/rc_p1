@@ -296,9 +296,31 @@ char** ExtractOnLevelURLs(const char** resources_names, const int number_of_reso
     *on_level_urls_count = 0;
     char** answer = malloc(sizeof(char*));
 
-    for(int i = 0; i < number_of_resources_found; i++) {
+    const char* last_str = strrchr(url, '/');
+    int i = 1;
+    int hasExtension = 0;
+    while(last_str[i] != '\0') {
+        if(last_str[i] == '.') {
+            hasExtension = 1;
+            break;
+        }
+        i++;
+    }
+
+    char* location = NULL;
+    if(hasExtension == 1) {
+        const int to_copy_size = last_str - url ;
+        location = malloc(to_copy_size);
+        strncpy(location, url, to_copy_size);
+        location[to_copy_size] = '\0';
+    }
+    else {
+        location = strdup(url);
+    }
+
+    for(i = 0; i < number_of_resources_found; i++) {
         if(IsResourceOnLevel(resources_names[i])) {
-            char* new_url = CombineStrings(3, strlen(url) + strlen(resources_names[i]) + 2, url, "/", resources_names[i]);
+            char* new_url = CombineStrings(3, strlen(location) + strlen(resources_names[i]) + 2, location, "/", resources_names[i]);
             if(IsURLAlreadyIncluded(answer, *on_level_urls_count, new_url) == 0) {
                 answer = realloc(answer, (*on_level_urls_count + 1) * sizeof(char*));
                 answer[*on_level_urls_count] = new_url;
@@ -307,6 +329,7 @@ char** ExtractOnLevelURLs(const char** resources_names, const int number_of_reso
         }
     }
 
+    free(location);
     return answer;
 }
 
