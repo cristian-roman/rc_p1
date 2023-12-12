@@ -53,11 +53,7 @@ int main(const int argc, char** argv) {
 
         const short expected_server_response_length = 512;
         char* response = ReceiveMessageFromServer(client_socket, expected_server_response_length);
-
-        if(response != NULL) {
-            LogInfo(response);
-            free(response);
-        }
+        free(response);
 
         close(client_socket);
     }
