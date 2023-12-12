@@ -1,19 +1,31 @@
 #include "web_handler.h"
 #include "../../../custom_libraries/custom_c_logger/custom_c_logger.h"
 #include "../../../custom_libraries/custom_c_string/custom_c_string.h"
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
-#include <curl/curl.h>
 
 #include "downloader/downloader.h"
 #include "file_hierarchy_creator/file_hierarchy_creator.h"
+#include "url_extractor/url_extractor.h"
 
 #define DOWNLOAD_LOCATION "downloaded_resources"
 
+char* DownloadResource(char* url) {
 
-void DownloadResources(char* url, const int depth)
+    LogInfo("Creating hierarchy for downloaded resources");
+    CreateFolder(".", DOWNLOAD_LOCATION);
+
+    char* starting_path = CombineStrings(3, strlen(DOWNLOAD_LOCATION) + 2, ".", "/", DOWNLOAD_LOCATION);
+    CreateHierarchyFromUrl(starting_path, url);
+    LogInfo("Hierarchy created successfully");
+    char* path_to_resource = GetPathToResource(starting_path, url);
+    free(starting_path);
+
+    DownloadOneResource(url, path_to_resource);
+    return path_to_resource;
+}
+
+void DumpUrl(char* url, const int depth)
 {
     if(depth == 0)
     {
@@ -21,28 +33,26 @@ void DownloadResources(char* url, const int depth)
         return;
     }
 
-    const char* pattern = "Downloading resources from URL: %s";
-    char* message = GetStringFromPattern(pattern, strlen(pattern) + strlen(url) + 10, url);
-    LogInfo(message);
-    free(message);
+    char* path_to_resource = DownloadResource(url);
 
-    curl_global_init(CURL_GLOBAL_DEFAULT);
-    CURL* curl = curl_easy_init();
-    if(curl == NULL)
+    int number_of_resources;
+    char** resources_names = ExtractResourcesNames(path_to_resource, &number_of_resources);
+
+    int refferenced_urls_count;
+    char** refferenced_urls = ExtractReferencedURLs(resources_names, number_of_resources, url, &refferenced_urls_count);
+
+    for(int i = 0; i < refferenced_urls_count; i++)
     {
-        LogError("Failed to initialize curl. Download interrupted");
-        curl_global_cleanup();
-        return;
+        const char* pattern = "Dumping url: %s";
+        char* message = GetStringFromPattern(pattern, strlen(pattern) + strlen(refferenced_urls[i]) + 10, refferenced_urls[i]);
+        LogWarning(message);
+        free(message);
+
+        char* path = DownloadResource(refferenced_urls[i]);
+        free(path);
     }
 
-    LogInfo("Creating hierarchy for downloaded resources");
-    CreateFolder(".", DOWNLOAD_LOCATION);
-    char* starting_path = CombineStrings(3, strlen(DOWNLOAD_LOCATION) + 2, ".", "/", DOWNLOAD_LOCATION);
-    CreateHierarchyFromUrl(starting_path, url);
-    LogInfo("Hierarchy created successfully");
-    char* path_to_resource = GetPathToResource(starting_path, url);
-    free(starting_path);
-
-    DownloadOneResource(curl, url, path_to_resource);
+    FreeResources(refferenced_urls, refferenced_urls_count);
+    FreeResources(resources_names, number_of_resources);
     free(path_to_resource);
 }

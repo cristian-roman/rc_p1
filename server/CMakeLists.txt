@@ -25,4 +25,4 @@ target_include_directories(server PRIVATE libraries/web_handler/file_hierarchy_c
 target_include_directories(server PRIVATE libraries/web_handler/downloader)
 target_include_directories(server PRIVATE libraries/web_handler/url_extractor)
 
-target_link_libraries(server PRIVATE custom_c_string custom_c_logger server_network downloader file_hierarchy_creator url_extractor client_handler web_handler )
+target_link_libraries(server PRIVATE custom_c_string custom_c_logger server_network downloader file_hierarchy_creator url_extractor client_handler web_handler)

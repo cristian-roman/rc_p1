@@ -95,7 +95,7 @@ void AddTodayFolderToPaths() {
         } else {
             mkdir(current_path, 0777);
         }
-
+        
         current_path = realloc(current_path, strlen(current_path) + strlen(today_date) + 2);
         sprintf(current_path, "%s/%s", current_path, today_date);
         log_file_paths[i] = current_path;

@@ -56,12 +56,19 @@ int WriteToClient(const int client_socket, const char* server_message) {
 }
 
 void ExtractUrlAndDepthFromClientMessage(char* client_message, char** url, int* depth) {
-    const int number_of_tokens_expected = 2;
-    char** tokens = SplitString(client_message, ' ', number_of_tokens_expected);
-    *url = malloc(strlen(tokens[0]) + 1);
-    strcpy(*url, tokens[0]);
-    *depth = atoi(tokens[1]);
-    FreeSplitString(tokens, number_of_tokens_expected);
+    const char* token = strtok(client_message, " ");
+    int i = 0;
+    while(token != NULL && i < 2) {
+        if(i == 0) {
+            *url = malloc(strlen(token) + 1);
+            strcpy(*url, token);
+        }
+        else {
+            *depth = atoi(token);
+        }
+        token = strtok(NULL, " ");
+        i++;
+    }
 }
 
 // ReSharper disable once CppNotAllPathsReturnValue
@@ -84,7 +91,7 @@ void* TreatClientRequest(void* arg) {
         return (void*) -1;
     }
 
-    DownloadResources(url, depth);
+    DumpUrl(url, depth);
 
     return 0;
 }

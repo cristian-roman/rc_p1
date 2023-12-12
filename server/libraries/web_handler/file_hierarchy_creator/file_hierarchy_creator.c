@@ -37,6 +37,15 @@ char* RemoveURLPrefix(const char* url)
     return url_without_copy;
 }
 
+void RemoveUnprefixedURLLastSlash(char** url)
+{
+    const int len = strlen(*url);
+    if((*url)[len-1] == '/')
+    {
+        (*url)[len-1] = '\0';
+    }
+}
+
 void CreateFolder(const char* path, const char* folder_name)
 {
     char* new_path = CombineStrings(3, strlen(path) + strlen(folder_name) + 2, path, "/", folder_name);
@@ -48,33 +57,57 @@ void CreateFolder(const char* path, const char* folder_name)
         free(new_path);
         return;
     }
-    mkdir(new_path, 0777);
+    if(mkdir(new_path, 0777) == -1)
+    {
+        const char* pattern = "Failed to create folder %s";
+        char* message = GetStringFromPattern(pattern, strlen(pattern) + strlen(new_path) + 10, new_path);
+        LogError(message);
+        free(message);
+    }
     free(new_path);
+}
+
+int FileNameHasExtension(const char* file_name) {
+    const int len = strlen(file_name);
+    for(int i = 0; i < len; i++)
+    {
+        if(file_name[i] == '.')
+        {
+            return 1;
+        }
+    }
+    return 0;
 }
 
 void CreateHierarchyFromUrl(const char* starting_location, const char* url)
 {
     char* url_without_prefix = RemoveURLPrefix(url);
-    const int number_of_tokens = GetNumberOfTokens(url_without_prefix, '/');
-    char** tokens = SplitString(url_without_prefix, '/', number_of_tokens);
-    free(url_without_prefix);
+    RemoveUnprefixedURLLastSlash(&url_without_prefix);
 
     char* path = malloc(strlen(starting_location) + 1);
     strcpy(path, starting_location);
 
-    for(int i = 0; i < number_of_tokens-1; i++)
+    const char* token = strtok(url_without_prefix, "/");
+    while(token != NULL)
     {
-        if(tokens[i] == NULL || strlen(tokens[i]) == 0)
-        {
-            continue;
+        char* copy_token = strdup(token);
+        token = strtok(NULL, "/");
+
+        if(token == NULL) {
+            if(!FileNameHasExtension(copy_token)) {
+                CreateFolder(path, copy_token);
+            }
+            free(copy_token);
+            break;
         }
-        CreateFolder(path, tokens[i]);
-        char* new_path = CombineStrings(3, strlen(path) + strlen(tokens[i]) + 2, path, "/", tokens[i]);
+
+        CreateFolder(path, copy_token);
+        char* new_path = CombineStrings(3, strlen(path) + strlen(copy_token) + 2, path, "/", copy_token);
         free(path);
         path = new_path;
+        free(copy_token);
     }
-    free(path);
-    FreeSplitString(tokens, number_of_tokens);
+    free(url_without_prefix);
 }
 
 char* ExtractResourceFileNameWithExtension(const char* url) {
@@ -92,45 +125,39 @@ char* ExtractResourceFileNameWithExtension(const char* url) {
     return 0;
 }
 
-int FileNameHasExtension(const char* file_name) {
-    const int len = strlen(file_name);
-    for(int i = 0; i < len; i++)
-    {
-        if(file_name[i] == '.')
-        {
-            return 1;
-        }
-    }
-    return 0;
-}
-
 char* GetPathToResource(const char* starting_location, const char* url) {
 
     //serach up to the antepenultimate slash
     char* url_without_prefix = RemoveURLPrefix(url);
-    const int number_of_tokens = GetNumberOfTokens(url_without_prefix, '/');
-    char** tokens = SplitString(url_without_prefix, '/', number_of_tokens);
-    free(url_without_prefix);
-
+    RemoveUnprefixedURLLastSlash(&url_without_prefix);
 
     char* path = malloc(strlen(starting_location) + 1);
     strcpy(path, starting_location);
 
-    for(int i = 0; i < number_of_tokens - 1; i++)
+    const char* token = strtok(url_without_prefix, "/");
+    while(token != NULL)
     {
-        char* new_path = CombineStrings(3, strlen(path) + strlen(tokens[i]) + 2, path, "/", tokens[i]);
+        char* copy_token = strdup(token);
+        token = strtok(NULL, "/");
+
+        if(token == NULL) {
+            if(FileNameHasExtension(copy_token)) {
+                free(copy_token);
+                break;
+            }
+        }
+        char* new_path = CombineStrings(3, strlen(path) + strlen(copy_token) + 2, path, "/", copy_token);
         free(path);
         path = new_path;
+        free(copy_token);
     }
-
-    FreeSplitString(tokens, number_of_tokens);
+    free(url_without_prefix);
 
     //check if the last token is a file name or a folder name. If it is a folder name, create it and name the resource index.html
     //else just return the path to the resource
     char* file_name = ExtractResourceFileNameWithExtension(url);
     if(!FileNameHasExtension(file_name)) {
-        CreateFolder(path, file_name);
-        char* new_path = CombineStrings(5, strlen(path) + strlen(file_name) + 2, path, "/", file_name, "/", "index.html");
+        char* new_path = CombineStrings(3, strlen(path) + strlen(file_name) + 2, path, "/", "index.html");
         free(path);
         path = new_path;
     }

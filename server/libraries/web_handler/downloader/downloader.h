@@ -6,6 +6,6 @@
 #define DOWNLOADER_H
 #include <curl/curl.h>
 
-void DownloadOneResource(CURL* curl, char* url, const char* path_to_resource);
+void DownloadOneResource(char* url, const char* path_to_resource);
 
 #endif //DOWNLOADER_H

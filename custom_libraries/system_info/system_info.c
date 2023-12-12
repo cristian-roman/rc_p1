@@ -9,7 +9,7 @@ char* GetCurrentBuildTime()
     time(&t);
     const struct tm* tm_info = localtime(&t);
 
-    const short CURRENT_BUILD_TIME_SIZE = 9;
+    const short CURRENT_BUILD_TIME_SIZE = 20;
     char* buildTime = malloc(CURRENT_BUILD_TIME_SIZE);
     strftime(buildTime, CURRENT_BUILD_TIME_SIZE, "%H:%M:%S", tm_info);
 
@@ -22,7 +22,7 @@ char* GetCurrentDate() {
     time(&t);
     const struct tm* tm_info = localtime(&t);
 
-    const short CURRENT_DATE_STRING_SIZE = 11;
+    const short CURRENT_DATE_STRING_SIZE = 20;
     char* currentDate = malloc(CURRENT_DATE_STRING_SIZE);
     strftime(currentDate, CURRENT_DATE_STRING_SIZE, "%Y-%m-%d", tm_info);
 

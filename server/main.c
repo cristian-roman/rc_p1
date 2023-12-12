@@ -38,6 +38,7 @@ int main() {
                 int* cfd = malloc(sizeof(int));
                 *cfd = fd;
                 pthread_create(&thread_id, NULL, TreatClientRequest, cfd);
+                pthread_detach(thread_id);
             }
         }
 

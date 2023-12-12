@@ -16,7 +16,7 @@ static size_t write_data(const void *ptr, const size_t size, const size_t nmemb,
     return fwrite(ptr, size, nmemb, stream);
 }
 
-void DownloadOneResource(CURL* curl, char* url, const char* path_to_resource) {
+void DownloadOneResource(char* url, const char* path_to_resource) {
     FILE* file = fopen(path_to_resource, "wb");
     if(file == NULL)
     {
@@ -24,18 +24,54 @@ void DownloadOneResource(CURL* curl, char* url, const char* path_to_resource) {
         return;
     }
 
-    curl_easy_setopt(curl, CURLOPT_URL, url);
+    const char* pattern = "Downloading resources from URL: %s";
+    char* message = GetStringFromPattern(pattern, strlen(pattern) + strlen(url) + 10, url);
+    LogInfo(message);
+    free(message);
 
-    // Set the callback function to write data to file
-    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_data);
+    curl_global_init(CURL_GLOBAL_DEFAULT);
+    CURL* curl = curl_easy_init();
+    if(curl == NULL)
+    {
+        LogError("Failed to initialize curl. Download interrupted");
+        curl_global_cleanup();
+        return;
+    }
 
-    // Set the file pointer as the write data parameter
-    curl_easy_setopt(curl, CURLOPT_WRITEDATA, file);
+    // Set the URL
+    const CURLcode setUrlRes = curl_easy_setopt(curl, CURLOPT_URL, url);
+    if (setUrlRes != CURLE_OK) {
+        LogError("Failed to set URL for download");
+        fclose(file);
+        curl_easy_cleanup(curl);
+        curl_global_cleanup();
+        return;
+    }
 
-    // Set option to resume the download if possible
-    curl_easy_setopt(curl, CURLOPT_RESUME_FROM, 0L);
+    // Set the write callback
+    const CURLcode setWriteRes = curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_data);
+    if (setWriteRes != CURLE_OK) {
+        LogError("Failed to set write callback");
+        fclose(file);
+        curl_easy_cleanup(curl);
+        curl_global_cleanup();
+        return;
+    }
 
-    // Perform the download
+    // Set the write data
+    const CURLcode setWriteDataRes = curl_easy_setopt(curl, CURLOPT_WRITEDATA, file);
+    if (setWriteDataRes != CURLE_OK) {
+        LogError("Failed to set write data");
+        fclose(file);
+        curl_easy_cleanup(curl);
+        curl_global_cleanup();
+        return;
+    }
+
+    const long current_pos = ftell(file);
+
+    curl_easy_setopt(curl, CURLOPT_RESUME_FROM, current_pos);
+
     LogInfo("Downloading started...");
     CURLcode res = curl_easy_perform(curl);
 
