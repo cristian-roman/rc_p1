@@ -2,7 +2,7 @@
 #define SERVER_SERVER_NETWORK_H
 
 #define PORT 5050
-#define MAX_CLIENTS 5
+#define MAX_CLIENTS 15
 #include <sys/select.h>
 
 enum OperationStatus

@@ -7,6 +7,7 @@ add_subdirectory(../custom_libraries/custom_c_logger custom_c_logger_build)
 add_subdirectory(../custom_libraries/custom_c_string custom_c_string_build)
 add_subdirectory(../custom_libraries/system_info system_info_build)
 add_subdirectory(libraries/server_network)
+add_subdirectory(libraries/client_handler)
 
 add_executable(server main.c)
 
@@ -14,5 +15,6 @@ target_include_directories(server PRIVATE ../custom_libraries/custom_c_logger)
 target_include_directories(server PRIVATE ../custom_libraries/custom_c_string)
 target_include_directories(server PRIVATE ../custom_libraries/system_info)
 target_include_directories(server PRIVATE libraries/server_network)
+target_include_directories(server PRIVATE libraries/client_handler)
 
-target_link_libraries(server PRIVATE custom_c_string custom_c_logger server_network)
+target_link_libraries(server PRIVATE custom_c_string custom_c_logger server_network client_handler)

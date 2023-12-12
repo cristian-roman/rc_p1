@@ -27,18 +27,25 @@ void InitServerSideNetwork()
     OpenPortForListening();
 }
 
-void OpenPortForListening()
+void CreateServerSocket()
 {
-    if (listen(SERVER_SOCKET, MAX_CLIENTS) == -1) {
-        LogError("Server application shutting down.... [REASON] socket opening for listen failed");
+    SERVER_SOCKET = socket(AF_INET, SOCK_STREAM, 0);
+    if(SERVER_SOCKET == -1)
+    {
+        LogError("Server application shutting down.... [REASON] socket creation failed");
         NETWORK_OPERATION_STATUS = FAILED;
         exit(-1);
     }
 
-    const char* pattern = "Server application has successfully opened the socket for listening on port %d";
-    char* messageFromPattern = GetStringFromPattern(pattern, strlen(pattern) + 10, PORT);
-    LogInfo(messageFromPattern);
-    free(messageFromPattern);
+    if(setsockopt(SERVER_SOCKET, SOL_SOCKET, SO_REUSEADDR, &(int){ 1 }, sizeof(int)))
+    {
+        LogError("Server application shutting down.... [REASON] socket option settings failed");
+        NETWORK_OPERATION_STATUS = FAILED;
+        exit(-1);
+    }
+
+    LogInfo("Server application has successfully created a socket");
+    MAX_FD = SERVER_SOCKET;
     NETWORK_OPERATION_STATUS = SUCCEEDED;
 }
 
@@ -66,25 +73,18 @@ void BindServerSocket()
     NETWORK_OPERATION_STATUS = SUCCEEDED;
 }
 
-void CreateServerSocket()
+void OpenPortForListening()
 {
-    SERVER_SOCKET = socket(AF_INET, SOCK_STREAM, 0);
-    if(SERVER_SOCKET == -1)
-    {
-        LogError("Server application shutting down.... [REASON] socket creation failed");
+    if (listen(SERVER_SOCKET, MAX_CLIENTS) == -1) {
+        LogError("Server application shutting down.... [REASON] socket opening for listen failed");
         NETWORK_OPERATION_STATUS = FAILED;
         exit(-1);
     }
 
-    if(setsockopt(SERVER_SOCKET, SOL_SOCKET, SO_REUSEADDR, &(int){ 1 }, sizeof(int)))
-    {
-        LogError("Server application shutting down.... [REASON] socket option settings failed");
-        NETWORK_OPERATION_STATUS = FAILED;
-        exit(-1);
-    }
-
-    LogInfo("Server application has successfully created a socket");
-    MAX_FD = SERVER_SOCKET;
+    const char* pattern = "Server application has successfully opened the socket for listening on port %d";
+    char* messageFromPattern = GetStringFromPattern(pattern, strlen(pattern) + 10, PORT);
+    LogInfo(messageFromPattern);
+    free(messageFromPattern);
     NETWORK_OPERATION_STATUS = SUCCEEDED;
 }
 

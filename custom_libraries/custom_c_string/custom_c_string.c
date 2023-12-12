@@ -45,13 +45,13 @@ int GetNumberOfTokens(const char* str, const char delimiter) {
     return result;
 }
 
-char** SplitString(char* str, const char delimiter, int numTokens) {
+char** SplitString(char* str, const char delimiter, const int numTokens) {
 
     char** result = malloc(numTokens * sizeof(char*));
     bzero(result, numTokens * sizeof(char*));
     const char* token = strtok(str, &delimiter);
     int i = 0;
-    while (token != NULL) {
+    while (token != NULL && i < numTokens) {
         result[i] = malloc(strlen(token) + 2);
         bzero(result[i], strlen(token) + 2);
         strcpy(result[i], token);

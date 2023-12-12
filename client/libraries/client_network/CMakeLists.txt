@@ -1,0 +1,2 @@
+add_library(client_network client_network.c client_network.h)
+target_include_directories(client_network PRIVATE custom_c_string custom_c_logger)
