@@ -10,6 +10,7 @@
 #include "../server_network/server_network.h"
 #include "../../../custom_libraries/custom_c_string/custom_c_string.h"
 #include "../../../custom_libraries/custom_c_logger/custom_c_logger.h"
+#include "../web_handler/web_handler.h"
 
 char* ReadFromClient(const int client_socket, const int expected_message_length) {
     char* client_message = malloc(expected_message_length);
@@ -55,11 +56,12 @@ int WriteToClient(const int client_socket, const char* server_message) {
 }
 
 void ExtractUrlAndDepthFromClientMessage(char* client_message, char** url, int* depth) {
-    char** tokens = SplitString(client_message, ' ', 2);
+    const int number_of_tokens_expected = 2;
+    char** tokens = SplitString(client_message, ' ', number_of_tokens_expected);
     *url = malloc(strlen(tokens[0]) + 1);
     strcpy(*url, tokens[0]);
     *depth = atoi(tokens[1]);
-    free(tokens);
+    FreeSplitString(tokens, number_of_tokens_expected);
 }
 
 // ReSharper disable once CppNotAllPathsReturnValue
@@ -81,6 +83,8 @@ void* TreatClientRequest(void* arg) {
     if (WriteToClient(client_socket, server_response) < 0) {
         return (void*) -1;
     }
+
+    DownloadResources(url, depth);
 
     return 0;
 }

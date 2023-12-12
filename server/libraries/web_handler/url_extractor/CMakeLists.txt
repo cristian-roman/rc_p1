@@ -1,0 +1,2 @@
+add_library(url_extractor url_extractor.c url_extractor.h)
+target_include_directories(url_extractor PRIVATE custom_c_string custom_c_logger)

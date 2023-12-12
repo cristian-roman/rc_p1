@@ -18,7 +18,7 @@ void HandleConnectionError(short* attempt, short *waiting_time, const char* fail
 {
     const char* pattern = "It might be due to the fact that the maximum number of open files has been reached. Retrying in %d seconds";
     char* partial_message = GetStringFromPattern(pattern, strlen(pattern) + 10, *waiting_time);
-    char* message = CombineStrings(2, strlen(partial_message) + strlen(fail_reason) + 10, partial_message, fail_reason);
+    char* message = CombineStrings(2, strlen(partial_message) + strlen(fail_reason) + 10, fail_reason, partial_message);
     free(partial_message);
     LogWarning(message);
     free(message);

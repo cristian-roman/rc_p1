@@ -42,7 +42,10 @@ int GetNumberOfTokens(const char* str, const char delimiter) {
         }
     }
 
-    return result;
+    if(str[strlen(str)-1] == '/')
+        result--;
+
+    return result + 1;
 }
 
 char** SplitString(char* str, const char delimiter, const int numTokens) {
@@ -61,3 +64,11 @@ char** SplitString(char* str, const char delimiter, const int numTokens) {
 
     return result;
 }
+
+void FreeSplitString(char** tokens, const int numTokens) {
+    for (int i = 0; i < numTokens; i++) {
+        free(tokens[i]);
+    }
+    free(tokens);
+}
+
