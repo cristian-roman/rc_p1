@@ -1,0 +1,3 @@
+add_library(downloader downloader.c downloader.h)
+target_include_directories(downloader PRIVATE custom_c_string custom_c_logger)
+target_link_libraries(downloader PRIVATE custom_c_string custom_c_logger curl)

@@ -2,7 +2,7 @@
 #define SERVER_SERVER_NETWORK_H
 
 #define PORT 5050
-#define MAX_CLIENTS 5
+#define MAX_CLIENTS 15
 #include <sys/select.h>
 
 enum OperationStatus
@@ -11,13 +11,13 @@ enum OperationStatus
     SUCCEEDED
 };
 
-enum OperationStatus NETWORK_OPERATION_STATUS;
+extern enum OperationStatus NETWORK_OPERATION_STATUS;
 
-int SERVER_SOCKET;
-int MAX_FD;
-fd_set READ_FDS;
-fd_set WRITE_FDS;
-struct timeval TIMEOUT;
+extern int SERVER_SOCKET;
+extern int MAX_FD;
+extern fd_set READ_FDS;
+extern fd_set WRITE_FDS;
+extern struct timeval TIMEOUT;
 
 void CreateServerSocket();
 

@@ -3,33 +3,18 @@ project(client C)
 
 set(CMAKE_C_STANDARD 11)
 
-# Add the executable
+add_subdirectory(../custom_libraries/custom_c_logger custom_c_logger_build)
+add_subdirectory(../custom_libraries/custom_c_string custom_c_string_build)
+add_subdirectory(../custom_libraries/system_info system_info_build)
+add_subdirectory(libraries/client_network)
+add_subdirectory(libraries/utils)
+
 add_executable(client main.c)
 
-# Define the libraries and paths
-set(libraries myLogger myString system_info)
-set(paths ../custom-libraries/myLogger ../custom-libraries/myString ../custom-libraries/system_info)
+target_include_directories(client PRIVATE ../custom_libraries/custom_c_logger)
+target_include_directories(client PRIVATE ../custom_libraries/custom_c_string)
+target_include_directories(client PRIVATE ../custom_libraries/system_info)
+target_include_directories(client PRIVATE libraries/client_network)
+target_include_directories(client PRIVATE libraries/utils)
 
-# Loop through the libraries
-list(LENGTH libraries num_libraries )
-math(EXPR num_libraries "${num_libraries}-1")
-
-foreach(index RANGE ${num_libraries})
-    list(GET libraries ${index} library)
-    list(GET paths ${index} path)
-
-    # Compile the library source file
-    add_library(${library} SHARED ${path}/${library}.c)
-
-    # Link the library to the executable
-    target_link_libraries(client PRIVATE ${library})
-
-    # Set the library output directory
-    set_target_properties(${library} PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/lib)
-
-    if(${library} STREQUAL "myLogger")
-        target_link_libraries(${library} PRIVATE myString system_info)
-    endif()
-
-    message(STATUS "Added library ${library}")
-endforeach()
+target_link_libraries(client PRIVATE custom_c_string custom_c_logger client_network utils)

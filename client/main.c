@@ -3,154 +3,57 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
-#include <arpa/inet.h>
-#include "../custom-libraries/myLogger/myLogger.h"
-#include "../custom-libraries/myString/myString.h"
-
-#define IP_ADDRESS "127.0.0.1"
-#define PORT 5050
-#define NUM_CLIENTS 10
-#define MAX_NUMBER_OF_CLIENTS 10
-
-int connect_to_server()
-{
-    const int client_socket = socket(AF_INET, SOCK_STREAM, 0);
-    if (client_socket == -1) {
-        LogError("Client socket creation failed");
-        return -1;
-    }
-
-    struct sockaddr_in server_addr;
-    server_addr.sin_family = AF_INET;
-    server_addr.sin_port = htons(PORT);
-    server_addr.sin_addr.s_addr = inet_addr(IP_ADDRESS);
-
-    if (connect(client_socket, (struct sockaddr*)&server_addr, sizeof(server_addr)) == -1) {
-        LogError("Connection failed");
-        close(client_socket);
-        return -1;
-    }
-
-    return client_socket;
-}
-
-void read_url(char* url, const int url_size) {
-    char c;
-    int characters_read = 0;
-    bzero(url, url_size);
-    while(c != ' ' && c != '\n') {
-        c = getchar();
-        strncat(url, &c, 1);
-        characters_read++;
-        if (characters_read == url_size) {
-            LogWarning("URL is too long");
-            break;
-        }
-    }
-
-    while(c != '\n') {
-        c = getchar();
-    }
-
-    url[strcspn(url, "\n")] = '\0';
-
-    const size_t url_length = strlen(url);
-    if (url_length > 0 && url[url_length - 1] == '/') {
-        LogWarning("Trailing slash detected in URL. If your intention was without the trailing slash, please restart the client and type the URL again without the trailing slash");
-    }
-}
-
-int is_url_valid(char* url) {
-    // Check if the URL starts with "http://"
-    if (strncmp(url, "http://", 7) == 0) {
-        return 1;  // Valid URL with "http://"
-    }
-
-    // Check if the URL starts with "https://"
-    if (strncmp(url, "https://", 8) == 0) {
-        return 1;  // Valid URL with "https://"
-    }
-
-    // URL does not start with "http://" or "https://"
-    return 0;
-}
-
+#include "custom_c_logger.h"
+#include "custom_c_string.h"
+#include "client_network.h"
+#include "utils.h"
 
 int main(const int argc, char** argv) {
 
-    InitMyLogger();
+    InitMyLogger(1, STDOUT);
 
     if(argc != 2) {
-        LogErrorFromPattern("Usage:\n%s --single-client\n%s --multiple-clients", argv[0], argv[0]);
+        const char* pattern = "Usage:\n%s --single-client\n%s --multiple-clients";
+        char* message = GetStringFromPattern(pattern, strlen(pattern) + strlen(argv[0]) * 2 + 10, argv[0], argv[0]);
+        LogError(message);
+        free(message);
         exit(-1);
     }
 
     if (strcmp(argv[1], "--single-client") == 0) {
         printf("Please provide two parameters separated by enter(new line):\n- a string representing a valid URL\n- and a positive number representing the depth of the search: \n");
 
-        const int url_size = 256;
-        char* url = malloc(url_size);
+        char* url = ReadURL();
 
-        read_url(url, url_size);
+        int depth = ReadDepth();
 
-        int depth;
-        if (scanf("%d", &depth) != 1) {
-            LogError("Failed to read depth");
-            exit(EXIT_FAILURE);
-        }
-        getchar();
-
-        while(is_url_valid(url) == 0) {
-            printf("Type a valid URL:\n");
-            read_url(url, url_size);
+        while(!IsURLValid(url)) {
+            LogError("Url is not valid. Please type a valid url:");
+            free(url);
+            url = ReadURL();
         }
 
         while(depth < 1) {
-            LogWarningFromPattern("Depth: %d must be a positive number. Type a positive number:", depth);
-
-            if (scanf("%d", &depth) != 1) {
-                LogError("Failed to read depth");
-                exit(EXIT_FAILURE);
-            }
+            LogError("Invalid depth. Type a positive number:");
+            depth = ReadDepth();
         }
-        LogInfoFromPattern("Depth received: %d\n", depth);
-        LogInfoFromPattern("URL received: %s\n", url);
 
-        const int client_socket = connect_to_server();
-
-        const int depth_size = 10;
-        char* depthAsString = malloc(depth_size);
-        bzero(depthAsString, depth_size);
-        IntegerToString(depthAsString, depth);
-
-
-        const int message_size = 512;
-        char* message = malloc(message_size);
-        bzero(message, message_size);
-
-        CombineStrings(message, 3, url, " ", depthAsString);
-        free(depthAsString);
-        free(url);
-
-        int bytes = write(client_socket, message, strlen(message) + 1);
-        if (bytes == -1) {
-            LogError("Sending message failed");
-            close(client_socket);
-            free(message);
-            exit(EXIT_FAILURE);
-        }
-        LogInfoFromPattern("[Message sent to the server]: %s", message);
+        const char* pattern = "\nInput depth: %d\nInput url: %s\n";
+        char* message = GetStringFromPattern(pattern, strlen(pattern) + strlen(url) + 10, depth, url);
+        LogInfo(message);
         free(message);
 
-        char server_response[256];
-        bytes = read(client_socket, server_response, sizeof(server_response));
-        if (bytes == -1) {
-            LogError("Receiving message failed");
-            close(client_socket);
-            exit(EXIT_FAILURE);
-        }
+        const int client_socket = ConnectToServer();
 
-        LogInfoFromPattern("[Message received from the server]: %s", server_response);
+        pattern = "%s %d";
+        message = GetStringFromPattern(pattern, strlen(pattern) + strlen(url) + 10, url, depth);
+        free(url);
+
+        SendMessageToServer(client_socket, message);
+
+        const short expected_server_response_length = 512;
+        char* response = ReceiveMessageFromServer(client_socket, expected_server_response_length);
+        free(response);
 
         close(client_socket);
     }
