@@ -235,9 +235,7 @@ int IsURLAlreadyIncluded(const char** answer, const int refferenced_urls_count, 
     return 0;
 }
 
-char** ExtractReferencedURLs(const char** resources_names, const int number_of_resources_found, const char* url, int* refferenced_urls_count) {
-
-    *refferenced_urls_count = 0;
+char* GetRootUrl(const char* url) {
     char* root_url;
     const char* lookup = url;
     const char* third_slash = NULL;
@@ -261,7 +259,15 @@ char** ExtractReferencedURLs(const char** resources_names, const int number_of_r
         root_url[index] = '\0';
     }
 
+    return root_url;
+}
+
+char** ExtractReferencedURLs(const char** resources_names, const int number_of_resources_found, const char* url, int* refferenced_urls_count) {
+
+    *refferenced_urls_count = 0;
     char** answer = malloc(sizeof(char*));
+    char* root_url = GetRootUrl(url);
+
     for(int i = 0; i < number_of_resources_found; i++) {
         if(resources_names[i][0] == '/') {
             char* new_url = CombineStrings(2, strlen(root_url) + strlen(resources_names[i]), root_url, resources_names[i]);
@@ -276,3 +282,32 @@ char** ExtractReferencedURLs(const char** resources_names, const int number_of_r
     free(root_url);
     return answer;
 }
+
+int IsResourceOnLevel(const char* resource_name) {
+    for(int i = 0; i < strlen(resource_name); i++) {
+        if(resource_name[i] == '/') {
+            return 0;
+        }
+    }
+    return 1;
+}
+
+char** ExtractOnLevelURLs(const char** resources_names, const int number_of_resources_found, const char* url, int* on_level_urls_count) {
+    *on_level_urls_count = 0;
+    char** answer = malloc(sizeof(char*));
+
+    for(int i = 0; i < number_of_resources_found; i++) {
+        if(IsResourceOnLevel(resources_names[i])) {
+            char* new_url = CombineStrings(3, strlen(url) + strlen(resources_names[i]) + 2, url, "/", resources_names[i]);
+            if(IsURLAlreadyIncluded(answer, *on_level_urls_count, new_url) == 0) {
+                answer = realloc(answer, (*on_level_urls_count + 1) * sizeof(char*));
+                answer[*on_level_urls_count] = new_url;
+                *on_level_urls_count += 1;
+            }
+        }
+    }
+
+    return answer;
+}
+
+

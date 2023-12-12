@@ -12,6 +12,6 @@
 char** ExtractResourcesNames(const char* resource_path, int *number_of_resources_found);
 void FreeResources(char** resources_names, const int number_of_resources_found);
 char** ExtractReferencedURLs(const char** resources_names, const int number_of_resources_found , const char* url, int* refferenced_urls_count);
-// char** ExtractOnLevelURLs(const char** resourcesNames, const char* url);
+char** ExtractOnLevelURLs(const char** resources_names, const int number_of_resources_found, const char* url, int* on_level_urls_count);
 // char** ExtractNextLevelURLs(const char** resourcesNames, const char* url);
 #endif //URL_EXTRACTOR_H

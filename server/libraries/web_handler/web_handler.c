@@ -52,6 +52,21 @@ void DumpUrl(char* url, const int depth)
         free(path);
     }
 
+    int on_level_resources_count;
+    char** on_level_resources = ExtractOnLevelURLs(resources_names, number_of_resources, url, &on_level_resources_count);
+
+    for(int i = 0; i < on_level_resources_count; i++)
+    {
+        const char* pattern = "Dumping url: %s";
+        char* message = GetStringFromPattern(pattern, strlen(pattern) + strlen(on_level_resources[i]) + 10, on_level_resources[i]);
+        LogWarning(message);
+        free(message);
+
+        char* path = DownloadResource(on_level_resources[i]);
+        free(path);
+    }
+
+    FreeResources(on_level_resources, on_level_resources_count);
     FreeResources(refferenced_urls, refferenced_urls_count);
     FreeResources(resources_names, number_of_resources);
     free(path_to_resource);
