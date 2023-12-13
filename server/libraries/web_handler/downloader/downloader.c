@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <curl/curl.h>
 
 #include "../../../../custom_libraries/custom_c_logger/custom_c_logger.h"
 #include "../../../../custom_libraries/custom_c_string/custom_c_string.h"
@@ -82,7 +83,7 @@ void DownloadOneResource(char* url, const char* path_to_resource) {
     }
 
     LogInfo("Downloading finished successfully");
-
+    fflush(file);
     curl_easy_cleanup(curl);
     fclose(file);
     curl_global_cleanup();

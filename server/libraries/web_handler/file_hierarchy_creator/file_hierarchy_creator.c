@@ -21,6 +21,8 @@ void CreateFolder(const char* path, const char* folder_name)
     if(dir)
     {
         closedir(dir);
+        free(new_path);
+        return;
     }
     if(mkdir(new_path, 0777) == -1)
     {
@@ -28,8 +30,8 @@ void CreateFolder(const char* path, const char* folder_name)
         char* message = GetStringFromPattern(pattern, strlen(pattern) + strlen(new_path) + 10, new_path);
         LogWarning(message);
         free(message);
+        free(new_path);
     }
-    free(new_path);
 }
 
 char* WalkFromStartToResourceLocation(const char* start_location, const char* url, const int with_create) {

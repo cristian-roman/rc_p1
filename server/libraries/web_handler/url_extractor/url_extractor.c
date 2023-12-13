@@ -113,33 +113,37 @@ struct Resources_Lenght_Pair* ExtractRelativeUrls(const char* resource_path)
     // ReSharper disable once CppEntityAssignedButNoRead
     ssize_t read;
     // ReSharper disable once CppDFAUnusedValue
+    int pattern_index;
     while ((read = getline(&line, &len, file)) != -1)
     {
-
         for(int i = 0; i < NUMBER_OF_PATTERNS; i++)
         {
-            const int pattern_index = BoyerMooreSearch(line, searching_patterns[i]);
-            if(pattern_index == -1)
-                continue;
+            int position_after_pattern = 0;
+            do {
+                const char* line_after_pattern = line + position_after_pattern;
+                 pattern_index = BoyerMooreSearch(line_after_pattern, searching_patterns[i]);
+                if(pattern_index == -1)
+                    continue;
 
-            const int position_after_pattern = strstr(line, searching_patterns[i]) - line + strlen(searching_patterns[i]);
-            char* resource = GetResource(line + position_after_pattern);
+                position_after_pattern = strstr(line_after_pattern, searching_patterns[i]) - line + strlen(searching_patterns[i]);
+                char* resource = GetResource(line_after_pattern + position_after_pattern);
 
-            if(!IsResourceValid(resource))
-            {
-                free(resource);
-                continue;
-            }
+                if(!IsResourceValid(resource))
+                {
+                    free(resource);
+                    continue;
+                }
 
-            answer->lenght++;
-            answer->resources = realloc(answer->resources, (answer->lenght) * sizeof(char*));
-            answer->resources[answer->lenght - 1] = resource;
+                answer->lenght++;
+                answer->resources = realloc(answer->resources, (answer->lenght) * sizeof(char*));
+                answer->resources[answer->lenght - 1] = resource;
+            }while(pattern_index != -1);
 
         }
     }
 
     fclose(file);
-
+    free(line);
     return answer;
 }
 

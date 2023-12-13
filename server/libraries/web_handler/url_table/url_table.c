@@ -29,6 +29,8 @@ struct UrlTable* InitUrlTable(const char* url, const int depth, const int max_de
 
     url_table->url_set = InitHashSet();
 
+    AddToHashSet(url_table->url_set, url);
+
     return url_table;
 }
 
