@@ -20,8 +20,8 @@ void CreateFolder(const char* path, const char* folder_name)
     DIR* dir = opendir(new_path);
     if(dir)
     {
-        closedir(dir);
         free(new_path);
+        closedir(dir);
         return;
     }
     if(mkdir(new_path, 0777) == -1)

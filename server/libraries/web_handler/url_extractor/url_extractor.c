@@ -135,7 +135,13 @@ struct Resources_Lenght_Pair* ExtractRelativeUrls(const char* resource_path)
                 }
 
                 answer->lenght++;
-                answer->resources = realloc(answer->resources, (answer->lenght) * sizeof(char*));
+                char** new_resources = malloc(answer->lenght * sizeof(char*));
+                for(int j = 0; j < answer->lenght - 1; j++)
+                {
+                    new_resources[j] = answer->resources[j];
+                }
+                free(answer->resources);
+                answer->resources = new_resources;
                 answer->resources[answer->lenght - 1] = resource;
             }while(pattern_index != -1);
 
