@@ -11,6 +11,8 @@
 #include "../../../custom_libraries/custom_c_string/custom_c_string.h"
 #include "../../../custom_libraries/custom_c_logger/custom_c_logger.h"
 #include "../web_handler/web_handler.h"
+#include "../web_handler/url_table/url_table.h"
+#include "../web_handler/url_handler/url_handler.h"
 
 char* ReadFromClient(const int client_socket, const int expected_message_length) {
     char* client_message = malloc(expected_message_length);
@@ -81,9 +83,9 @@ void* TreatClientRequest(void* arg) {
         return (void*) -1;
     }
 
-    int depth;
+    int relative_depth;
     char *url;
-    ExtractUrlAndDepthFromClientMessage(client_message, &url, &depth);
+    ExtractUrlAndDepthFromClientMessage(client_message, &url, &relative_depth);
     free(client_message);
 
     const char* server_response = "Hello client! I have received the url and the depth. Trying to perform resources download...";
@@ -91,7 +93,11 @@ void* TreatClientRequest(void* arg) {
         return (void*) -1;
     }
 
-    DumpUrl(url, depth);
+    const int depth = GetUrlDepth(url);
+    const int max_depth = depth + relative_depth;
+    struct UrlTable* url_table = InitUrlTable(url, depth, max_depth);
+    DumpUrlTable(url_table, 0, max_depth);
+    FreeUrlTable(url_table);
 
     return 0;
 }

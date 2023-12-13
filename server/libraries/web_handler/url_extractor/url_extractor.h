@@ -4,14 +4,8 @@
 
 #ifndef URL_EXTRACTOR_H
 #define URL_EXTRACTOR_H
+#include "../file_hierarchy_creator/file_hierarchy_creator.h"
+#include "../url_table/url_table.h"
 
-#define SOURCE_LEVEL_URLS 0
-#define ON_LEVEL_URLS 1
-#define NEXT_LEVEL_URLS 2
-
-char** ExtractResourcesNames(const char* resource_path, int *number_of_resources_found);
-void FreeResources(char** resources_names, const int number_of_resources_found);
-char** ExtractReferencedURLs(const char** resources_names, const int number_of_resources_found , const char* url, int* refferenced_urls_count);
-char** ExtractOnLevelURLs(const char** resources_names, const int number_of_resources_found, const char* url, int* on_level_urls_count);
-// char** ExtractNextLevelURLs(const char** resourcesNames, const char* url);
+void AddResourcesToUrlTable(const struct UrlTable* url_table, const struct Folder_Resource_Pair* folder_resource_pair, const char* url);
 #endif //URL_EXTRACTOR_H

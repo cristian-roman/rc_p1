@@ -12,325 +12,180 @@
 
 #include "../../../../custom_libraries/custom_c_logger/custom_c_logger.h"
 #include "../../../../custom_libraries/custom_c_string/custom_c_string.h"
+#include "../url_handler/url_handler.h"
+#include "../../algorithms/custom_boyer_moore/custom_boyer_moore.h"
+
+struct Resources_Lenght_Pair {
+    char** resources;
+    int lenght;
+};
 
 const int NUMBER_OF_PATTERNS = 2;
+const char* searching_patterns[] = {
+    "src=\"",
+    "href=\""
+};
 
-void HandleOpenFileError(const char* resource_path){
-    const char* pattern = "Failed to open file %s. URL Extracting interrupted";
-    char* message = GetStringFromPattern(pattern, strlen(pattern) + strlen(resource_path) + 10, resource_path);
-    LogError(message);
-    free(message);
-}
-
-char** InitializePatternsToSearchFor() {
-
-    char** patterns = malloc(NUMBER_OF_PATTERNS * sizeof(char*));
-
-    const char* src_pattern = "src=\"";
-    patterns[0] = malloc(strlen(src_pattern) + 1);
-    strcpy(patterns[0], src_pattern);
-
-    const char* href_pattern = "href=\"";
-    patterns[1] = malloc(strlen(href_pattern) + 1);
-    strcpy(patterns[1], href_pattern);
-
-    return patterns;
-}
-
-void FreePatterns(char** patterns) {
-    free(patterns[0]);
-    free(patterns[1]);
-    free(patterns);
-}
-
-char* FillBufferWithTag(FILE * file) {
-    int capacity = 256;
-    int size = 0;
-    char* buffer = malloc(capacity * sizeof(char));
-    char character;
-
-    if (buffer == NULL) {
-        LogError("Bad allocation for buffer in FillBufferWithTag");
-        return NULL;
+char* GetResource(const char* location) {
+    int capacity = 10;
+    char* resource = calloc(capacity, sizeof(char));
+    int i = 0;
+    while (location[i] != '"' && location[i] != '\0') {
+        if (i == capacity) {
+            capacity *= 2;
+            resource = realloc(resource, capacity * sizeof(char));
+        }
+        resource[i] = location[i];
+        i++;
     }
 
-    buffer[size++] = '<';
+    while(i < capacity)
+    {
+        resource[i] = '\0';
+        i++;
+    }
 
-    do {
-        character = fgetc(file);
+    return resource;
+}
 
-        if (size >= capacity - 1) {
-            capacity *= 2;
-            buffer = realloc(buffer, capacity * sizeof(char));
+int IsCharacterInvalid(const char c) {
+    return c == ' ' ||
+           c == '{' ||
+           c == '}' ||
+           c == '$' ||
+           c == '[' ||
+           c == ']';
+}
 
-            if (buffer == NULL) {
-                LogError("Bad allocation for buffer in FillBufferWithTag");
-                return NULL;
+int ContainsInvalidCharacters(const char* resource)
+{
+    for (size_t i = 0; i < strlen(resource); i++)
+        {
+            const char currentChar = resource[i];
+            if (IsCharacterInvalid(currentChar)) {
+                return 1;
             }
         }
-
-        buffer[size++] = character;
-
-    } while (character != EOF && character != '>');
-
-    return buffer;
+    return 0;
 }
 
+int CheckForTreeFileStructure(const char* resource) {
 
-int TagContainsResource(const char* tag, char** patterns) {
-    int ans = 0;
-    for(int i = 0; i < NUMBER_OF_PATTERNS; i++) {
-        if(strstr(tag, patterns[i]) != NULL) {
-            ans = 1;
-
-            break;
-        }
-    }
-
-    return ans;
-}
-
-int CheckForValidCharacters(const char* resource_name) {
-
-    for (size_t i = 0; i < strlen(resource_name); i++) {
-        const char currentChar = resource_name[i];
-        if (!isalnum(currentChar) && currentChar != '/' && currentChar != '.') {
-            return 0;
-        }
-    }
-
-    return 1;
-}
-
-int CheckForTreeFileStructure(const char* resource_name) {
-    const size_t len = strlen(resource_name);
-    if (resource_name[0] != '/' && !isalnum(resource_name[0])) {
-        return 0;
-    }
-
+    const size_t len = strlen(resource);
     for (size_t i = 1; i < len; i++) {
-        if (resource_name[i] == '/' && resource_name[i - 1] == '/') {
-            return 0;
-        }
 
-        if (i < len - 1 && resource_name[i] == '/' && !isalnum(resource_name[i + 1])) {
+        //check agains double '/'
+        if (resource[i] == '/' && resource[i - 1] == '/')
             return 0;
-        }
     }
 
     return 1;
 }
 
-int IsResourceNameValid(const char* resource_name) {
-
-    if(CheckForValidCharacters(resource_name) == 0) {
+int IsResourceValid(const char* resource)
+{
+    if(ContainsInvalidCharacters(resource))
         return 0;
-    }
 
-    if(CheckForTreeFileStructure(resource_name) == 0) {
+    if(!CheckForTreeFileStructure(resource))
         return 0;
-    }
-
     return 1;
 }
 
-char* ExtractResourceNameFromTag(const char* tag, const char** patterns) {
-
-    const char* start_pointer = NULL;
-    int length = 0;
-
-    for (int i = 0; i < NUMBER_OF_PATTERNS; i++) {
-        start_pointer = strstr(tag, patterns[i]);
-        if (start_pointer != NULL) {
-            length = strlen(patterns[i]);
-            break;
-        }
-    }
-
-    if (start_pointer == NULL) {
-        const char* pattern = "Failed to extract resource name from tag: %s";
-        char* message = GetStringFromPattern(pattern, strlen(pattern) + strlen(tag) + 10, tag);
+struct Resources_Lenght_Pair* ExtractRelativeUrls(const char* resource_path)
+{
+    FILE* file = fopen(resource_path, "r");
+    if(file == NULL)
+    {
+        const char* pattern = "Failed to open file %s. URL Extracting interrupted";
+        char* message = GetStringFromPattern(pattern, strlen(pattern) + strlen(resource_path) + 10, resource_path);
         LogError(message);
         free(message);
         return NULL;
     }
 
-    const int start_index = start_pointer - tag + length;
+    struct Resources_Lenght_Pair* answer = malloc(sizeof(struct Resources_Lenght_Pair));
+    answer->resources = malloc(sizeof(char*));
+    answer->lenght = 0;
 
-    int index = start_index;
-    while (tag[index] != '\"') {
-        index++;
-    }
-
-    const int required_capacity = index - start_index + 1;
-    char* resource_name = malloc(required_capacity * sizeof(char));
-
-    strncpy(resource_name, tag + start_index, index - start_index);
-    resource_name[index - start_index] = '\0';
-    return resource_name;
-}
-
-
-void AddStringToArray(char*** answer, const char* resource_name, const int resource_number) {
-    if (*answer == NULL) {
-        *answer = malloc(sizeof(char*));
-    } else {
-        *answer = realloc(*answer, (resource_number+1) * sizeof(char*));
-    }
-
-    (*answer)[resource_number] = malloc(strlen(resource_name) + 1);
-    strcpy((*answer)[resource_number], resource_name);
-}
-
-char** ExtractResourcesNames(const char* resource_path, int *number_of_resources_found)
-{
-    FILE* file = fopen(resource_path, "r");
-    if(file == NULL)
+    char* line = NULL;
+    size_t len = 0;
+    // ReSharper disable once CppEntityAssignedButNoRead
+    ssize_t read;
+    // ReSharper disable once CppDFAUnusedValue
+    while ((read = getline(&line, &len, file)) != -1)
     {
-        HandleOpenFileError(resource_path);
-        return NULL;
+
+        for(int i = 0; i < NUMBER_OF_PATTERNS; i++)
+        {
+            const int pattern_index = BoyerMooreSearch(line, searching_patterns[i]);
+            if(pattern_index == -1)
+                continue;
+
+            const int position_after_pattern = strstr(line, searching_patterns[i]) - line + strlen(searching_patterns[i]);
+            char* resource = GetResource(line + position_after_pattern);
+
+            if(!IsResourceValid(resource))
+            {
+                free(resource);
+                continue;
+            }
+
+            answer->lenght++;
+            answer->resources = realloc(answer->resources, (answer->lenght) * sizeof(char*));
+            answer->resources[answer->lenght - 1] = resource;
+
+        }
     }
 
-    char** answer = NULL;
-    *number_of_resources_found = 0;
-
-    char** patterns = InitializePatternsToSearchFor();
-
-    char character;
-    do {
-        character = fgetc(file);
-        if(character == '<') {
-            char* tag = FillBufferWithTag(file);
-            if(TagContainsResource(tag, patterns)) {
-                char* resource_name = ExtractResourceNameFromTag(tag, patterns);
-                if(IsResourceNameValid(resource_name)) {
-                    AddStringToArray(&answer, resource_name, *number_of_resources_found);
-                    *number_of_resources_found += 1;
-                }
-                free(resource_name);
-            }
-            free(tag);
-        }
-    }while(character != EOF);
-
-    FreePatterns(patterns);
     fclose(file);
 
     return answer;
 }
 
-void FreeResources(char** resources_names, const int number_of_resources_found) {
-    for(int i = 0; i < number_of_resources_found; i++) {
-        free(resources_names[i]);
-    }
-    free(resources_names);
+int ResourceBeginsWithSlash(const char* resource) {
+    return resource[0] == '/';
 }
 
-int IsURLAlreadyIncluded(const char** answer, const int refferenced_urls_count, const char* new_url ) {
-    for(int i = 0; i < refferenced_urls_count; i++) {
-        if(strcmp(answer[i], new_url) == 0) {
-            return 1;
+void AddResourcesToUrlTable(const struct UrlTable* url_table, const struct Folder_Resource_Pair* folder_resource_pair, const char* url)
+{
+    char* path_to_resource = CombineStrings(3, strlen(folder_resource_pair->folder) + strlen(folder_resource_pair->resource) + 2,
+                                            folder_resource_pair->folder, "/", folder_resource_pair->resource);
+
+    struct Resources_Lenght_Pair* resources_lenght_pair = ExtractRelativeUrls(path_to_resource);
+    free(path_to_resource);
+
+    char* url_without_resource = GetUrlWithoutResource(url);
+    char* root_url = GetBaseUrl(url);
+    for(int i = 0; i < resources_lenght_pair->lenght; i++)
+    {
+        char* resource = resources_lenght_pair->resources[i];
+        char* new_url;
+        if(ResourceBeginsWithSlash(resource))
+        {
+            new_url = CombineStrings(2,
+                strlen(root_url) + strlen(resource),
+                root_url,
+                resource);
         }
-    }
-    return 0;
-}
-
-char* GetRootUrl(const char* url) {
-    char* root_url;
-    const char* lookup = url;
-    const char* third_slash = NULL;
-
-    for(int i = 0 ; i < 3; i++) {
-        third_slash = strchr(lookup, '/');
-        if(third_slash == NULL) {
-            break;
+        else
+        {
+            new_url = CombineStrings(3,
+                strlen(url_without_resource) + strlen(resource) + 2,
+                url_without_resource,
+                "/",
+                resource);
         }
 
-        lookup = third_slash + 1;
-    }
+        const int depth = GetUrlDepth(new_url);
 
-    if(third_slash == NULL) {
-        root_url = strdup(url);
-    }
-    else {
-        const int index = third_slash - url;
-        root_url = malloc(index + 1);
-        strncpy(root_url, url, index);
-        root_url[index] = '\0';
-    }
+        AddUrlToTable(url_table, new_url, depth);
 
-    return root_url;
-}
-
-char** ExtractReferencedURLs(const char** resources_names, const int number_of_resources_found, const char* url, int* refferenced_urls_count) {
-
-    *refferenced_urls_count = 0;
-    char** answer = malloc(sizeof(char*));
-    char* root_url = GetRootUrl(url);
-
-    for(int i = 0; i < number_of_resources_found; i++) {
-        if(resources_names[i][0] == '/') {
-            char* new_url = CombineStrings(2, strlen(root_url) + strlen(resources_names[i]), root_url, resources_names[i]);
-            if(IsURLAlreadyIncluded(answer, *refferenced_urls_count, new_url) == 0) {
-                answer = realloc(answer, (*refferenced_urls_count + 1) * sizeof(char*));
-                answer[*refferenced_urls_count] = new_url;
-                *refferenced_urls_count += 1;
-            }
-        }
+        free(new_url);
+        free(resource);
     }
 
     free(root_url);
-    return answer;
+    free(url_without_resource);
+    free(resources_lenght_pair);
 }
-
-int IsResourceOnLevel(const char* resource_name) {
-    for(int i = 0; i < strlen(resource_name); i++) {
-        if(resource_name[i] == '/') {
-            return 0;
-        }
-    }
-    return 1;
-}
-
-char** ExtractOnLevelURLs(const char** resources_names, const int number_of_resources_found, const char* url, int* on_level_urls_count) {
-    *on_level_urls_count = 0;
-    char** answer = malloc(sizeof(char*));
-
-    const char* last_str = strrchr(url, '/');
-    int i = 1;
-    int hasExtension = 0;
-    while(last_str[i] != '\0') {
-        if(last_str[i] == '.') {
-            hasExtension = 1;
-            break;
-        }
-        i++;
-    }
-
-    char* location = NULL;
-    if(hasExtension == 1) {
-        const int to_copy_size = last_str - url ;
-        location = malloc(to_copy_size);
-        strncpy(location, url, to_copy_size);
-        location[to_copy_size] = '\0';
-    }
-    else {
-        location = strdup(url);
-    }
-
-    for(i = 0; i < number_of_resources_found; i++) {
-        if(IsResourceOnLevel(resources_names[i])) {
-            char* new_url = CombineStrings(3, strlen(location) + strlen(resources_names[i]) + 2, location, "/", resources_names[i]);
-            if(IsURLAlreadyIncluded(answer, *on_level_urls_count, new_url) == 0) {
-                answer = realloc(answer, (*on_level_urls_count + 1) * sizeof(char*));
-                answer[*on_level_urls_count] = new_url;
-                *on_level_urls_count += 1;
-            }
-        }
-    }
-
-    free(location);
-    return answer;
-}
-
-

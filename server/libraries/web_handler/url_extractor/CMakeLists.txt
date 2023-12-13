@@ -1,2 +1,3 @@
 add_library(url_extractor url_extractor.c url_extractor.h)
-target_include_directories(url_extractor PRIVATE custom_c_string custom_c_logger)
+target_include_directories(url_extractor PRIVATE custom_c_string custom_c_logger custom_boyer_moore file_hierarchy_creator url_handler url_table)
+target_link_libraries(url_extractor PRIVATE custom_c_string custom_c_logger custom_boyer_moore file_hierarchy_creator url_handler url_table)

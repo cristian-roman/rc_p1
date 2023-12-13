@@ -1,0 +1,3 @@
+add_library(url_table url_table.c url_table.h)
+target_include_directories(url_table PRIVATE custom_c_string custom_c_logger custom_c_hashset)
+target_link_libraries(url_table PRIVATE custom_c_string custom_c_logger custom_c_hashset)

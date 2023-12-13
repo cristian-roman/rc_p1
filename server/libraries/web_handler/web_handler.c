@@ -10,64 +10,56 @@
 
 #define DOWNLOAD_LOCATION "downloaded_resources"
 
-char* DownloadResource(char* url) {
+struct Folder_Resource_Pair* DownloadResource(char* url) {
 
     LogInfo("Creating hierarchy for downloaded resources");
+
     CreateFolder(".", DOWNLOAD_LOCATION);
+    char* start_path = CombineStrings(3, strlen(DOWNLOAD_LOCATION) + 2, ".", "/", DOWNLOAD_LOCATION);
+    CreateHierarchyFromUrl(start_path, url);
+    struct Folder_Resource_Pair* folder_resource_pair = GetPathToResource(start_path, url);
+    free(start_path);
 
-    char* starting_path = CombineStrings(3, strlen(DOWNLOAD_LOCATION) + 2, ".", "/", DOWNLOAD_LOCATION);
-    CreateHierarchyFromUrl(starting_path, url);
     LogInfo("Hierarchy created successfully");
-    char* path_to_resource = GetPathToResource(starting_path, url);
-    free(starting_path);
 
+    char* path_to_resource = CombineStrings(3, strlen(folder_resource_pair->folder) + strlen(folder_resource_pair->resource) + 2,
+                                                folder_resource_pair->folder, "/", folder_resource_pair->resource);
     DownloadOneResource(url, path_to_resource);
-    return path_to_resource;
+    free(path_to_resource);
+
+    return folder_resource_pair;
 }
 
-void DumpUrl(char* url, const int depth)
+void DumpUrlTable(struct UrlTable* url_table, const int current_depth, const int max_depth)
 {
-    if(depth == 0)
+    if(current_depth > max_depth)
     {
-        LogInfo("Depth limit reached. Download finished");
+        LogInfo("Depth limit reached. Finishing dumping...");
         return;
     }
 
-    char* path_to_resource = DownloadResource(url);
+    for(url_table->read_url_count[current_depth] = 0;
+        url_table->read_url_count[current_depth]< url_table->total_url_count[current_depth];
+        url_table->read_url_count[current_depth]+=1)
+        {
+            const int j = url_table->read_url_count[current_depth];
+            char* url = url_table->url_table[current_depth][j];
 
-    int number_of_resources;
-    char** resources_names = ExtractResourcesNames(path_to_resource, &number_of_resources);
+            struct Folder_Resource_Pair* folder_resource_pair = DownloadResource(url);
 
-    int refferenced_urls_count;
-    char** refferenced_urls = ExtractReferencedURLs(resources_names, number_of_resources, url, &refferenced_urls_count);
+            AddResourcesToUrlTable(url_table, folder_resource_pair, url);
 
-    for(int i = 0; i < refferenced_urls_count; i++)
-    {
-        const char* pattern = "Dumping url: %s";
-        char* message = GetStringFromPattern(pattern, strlen(pattern) + strlen(refferenced_urls[i]) + 10, refferenced_urls[i]);
-        LogWarning(message);
-        free(message);
+            FreeFolderResourcePair(folder_resource_pair);
+        }
 
-        char* path = DownloadResource(refferenced_urls[i]);
-        free(path);
+    DumpUrlTable(url_table, current_depth + 1, max_depth);
+
+    while(url_table->read_url_count[current_depth] < url_table->total_url_count[current_depth]) {
+        url_table->read_url_count[current_depth] += 1;
+        const int j = url_table->read_url_count[current_depth];
+        char* url = url_table->url_table[current_depth][j];
+
+        struct Folder_Resource_Pair* folder_resource_pair = DownloadResource(url);
+        FreeFolderResourcePair(folder_resource_pair);
     }
-
-    int on_level_resources_count;
-    char** on_level_resources = ExtractOnLevelURLs(resources_names, number_of_resources, url, &on_level_resources_count);
-
-    for(int i = 0; i < on_level_resources_count; i++)
-    {
-        const char* pattern = "Dumping url: %s";
-        char* message = GetStringFromPattern(pattern, strlen(pattern) + strlen(on_level_resources[i]) + 10, on_level_resources[i]);
-        LogWarning(message);
-        free(message);
-
-        char* path = DownloadResource(on_level_resources[i]);
-        free(path);
-    }
-
-    FreeResources(on_level_resources, on_level_resources_count);
-    FreeResources(refferenced_urls, refferenced_urls_count);
-    FreeResources(resources_names, number_of_resources);
-    free(path_to_resource);
 }

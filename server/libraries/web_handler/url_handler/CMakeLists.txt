@@ -1,0 +1,2 @@
+add_library(url_handler url_handler.c url_handler.h)
+target_include_directories(url_handler PRIVATE custom_c_string custom_c_logger)

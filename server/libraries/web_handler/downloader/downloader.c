@@ -24,6 +24,9 @@ void DownloadOneResource(char* url, const char* path_to_resource) {
         return;
     }
 
+    fseek(file, 0, SEEK_END);
+    const long current_pos = ftell(file);
+
     const char* pattern = "Downloading resources from URL: %s";
     char* message = GetStringFromPattern(pattern, strlen(pattern) + strlen(url) + 10, url);
     LogInfo(message);
@@ -38,63 +41,38 @@ void DownloadOneResource(char* url, const char* path_to_resource) {
         return;
     }
 
-    // Set the URL
-    const CURLcode setUrlRes = curl_easy_setopt(curl, CURLOPT_URL, url);
-    if (setUrlRes != CURLE_OK) {
-        LogError("Failed to set URL for download");
-        fclose(file);
-        curl_easy_cleanup(curl);
-        curl_global_cleanup();
-        return;
+    curl_easy_setopt(curl, CURLOPT_URL, url);
+
+    if (current_pos > 0) {
+        curl_easy_setopt(curl, CURLOPT_RESUME_FROM_LARGE, current_pos);
     }
 
-    // Set the write callback
-    const CURLcode setWriteRes = curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_data);
-    if (setWriteRes != CURLE_OK) {
-        LogError("Failed to set write callback");
-        fclose(file);
-        curl_easy_cleanup(curl);
-        curl_global_cleanup();
-        return;
-    }
-
-    // Set the write data
-    const CURLcode setWriteDataRes = curl_easy_setopt(curl, CURLOPT_WRITEDATA, file);
-    if (setWriteDataRes != CURLE_OK) {
-        LogError("Failed to set write data");
-        fclose(file);
-        curl_easy_cleanup(curl);
-        curl_global_cleanup();
-        return;
-    }
-
-    const long current_pos = ftell(file);
-
-    curl_easy_setopt(curl, CURLOPT_RESUME_FROM, current_pos);
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_data);
+    curl_easy_setopt(curl, CURLOPT_WRITEDATA, file);
 
     LogInfo("Downloading started...");
     CURLcode res = curl_easy_perform(curl);
 
     int sleep_time = 5;
-    for(int tries = 0; tries < 3 && res == CURLE_PARTIAL_FILE; tries++)
-    {
-        const char* pattern = "Failed to download the page. Retrying in %d seconds... (Try %d/3)";
-        char* message = GetStringFromPattern(pattern, strlen(pattern) + 10, sleep_time, tries + 1);
+    for (int tries = 0; tries < 3 && res == CURLE_PARTIAL_FILE; tries++) {
+        pattern = "Failed to download the page. Retrying in %d seconds... (Try %d/3)";
+        message = GetStringFromPattern(pattern, strlen(pattern) + 10, sleep_time, tries + 1);
         LogWarning(message);
         free(message);
 
         sleep(sleep_time);
         long file_size;
         curl_easy_getinfo(curl, CURLINFO_CONTENT_LENGTH_DOWNLOAD_T, &file_size);
-        curl_easy_setopt(curl, CURLOPT_RESUME_FROM, file_size);
+        curl_easy_setopt(curl, CURLOPT_RESUME_FROM_LARGE, file_size);
         res = curl_easy_perform(curl);
         sleep_time *= 2;
     }
 
+
     if(res!=CURLE_OK)
     {
-        const char* pattern = "Failed to download the page. Error code: %d";
-        char* message = GetStringFromPattern(pattern, strlen(pattern) + 10, res);
+        pattern = "Failed to download the page. Error code: %d";
+        message = GetStringFromPattern(pattern, strlen(pattern) + 10, res);
         LogError(message);
         free(message);
         fclose(file);
