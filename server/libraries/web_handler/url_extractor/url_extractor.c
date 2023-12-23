@@ -159,6 +159,12 @@ int ResourceBeginsWithSlash(const char* resource) {
 
 void AddResourcesToUrlTable(const struct UrlTable* url_table, const struct Folder_Resource_Pair* folder_resource_pair, const char* url)
 {
+    if(strstr(folder_resource_pair->resource, ".css") == NULL &&
+       strstr(folder_resource_pair->resource, ".js") == NULL &&
+       strstr(folder_resource_pair->resource, ".html") == NULL)
+    {
+        return;
+    }
     char* path_to_resource = CombineStrings(3, strlen(folder_resource_pair->folder) + strlen(folder_resource_pair->resource) + 2,
                                             folder_resource_pair->folder, "/", folder_resource_pair->resource);
 
@@ -185,6 +191,12 @@ void AddResourcesToUrlTable(const struct UrlTable* url_table, const struct Folde
                 url_without_resource,
                 "/",
                 resource);
+        }
+
+        if(new_url == NULL || strlen(new_url) == 0 || !IsUrl(new_url))
+        {
+            free(new_url);
+            continue;
         }
 
         const int depth = GetUrlDepth(new_url);

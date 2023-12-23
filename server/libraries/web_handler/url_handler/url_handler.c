@@ -128,6 +128,13 @@ char* GetUrlWithoutResource(const char* url) {
     return url_without_resource;
 }
 
+int IsUrl(const char* str) {
+    if(strstr(str, "http://") != NULL || strstr(str, "https://") != NULL) {
+        return 1;
+    }
+    return 0;
+}
+
 char* GetBaseUrl(const char* url) {
     int len = 0;
     if(strstr(url, "http://") != NULL) {

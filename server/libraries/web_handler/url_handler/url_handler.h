@@ -18,4 +18,5 @@ int TokenHasExtension(const char* token);
 char* GetUrlWithoutResource(const char* url);
 char* GetBaseUrl(const char* url);
 int GetUrlDepth(const char* url);
+int IsUrl(const char* str);
 #endif //URL_HANDLER_H

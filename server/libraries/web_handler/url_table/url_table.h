@@ -16,5 +16,6 @@ struct UrlTable {
 struct UrlTable* InitUrlTable(const char* url, int depth, int max_depth);
 void AddUrlToTable(const struct UrlTable* url_table, const char* new_url, const int depth);
 void FreeUrlTable(struct UrlTable* url_table);
+void LogUrlTable(const struct UrlTable* url_table);
 
 #endif //URL_TABLE_H

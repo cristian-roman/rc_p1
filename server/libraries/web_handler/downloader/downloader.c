@@ -3,6 +3,7 @@
 //
 
 #include "downloader.h"
+#include <pthread.h>
 
 #include <stdlib.h>
 #include <string.h>
@@ -12,13 +13,15 @@
 #include "../../../../custom_libraries/custom_c_logger/custom_c_logger.h"
 #include "../../../../custom_libraries/custom_c_string/custom_c_string.h"
 
+static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 
 static size_t write_data(const void *ptr, const size_t size, const size_t nmemb, FILE *stream) {
     return fwrite(ptr, size, nmemb, stream);
 }
 
 void DownloadOneResource(char* url, const char* path_to_resource) {
-    FILE* file = fopen(path_to_resource, "wb");
+    pthread_mutex_lock(&mutex);
+    FILE* file = fopen(path_to_resource, "w");
     if(file == NULL)
     {
         LogError("Failed to open file to save the document. Someone else might be trying to download the same page at the same time. Download interrupted");
@@ -82,9 +85,10 @@ void DownloadOneResource(char* url, const char* path_to_resource) {
         return;
     }
 
-    LogInfo("Downloading finished successfully");
     fflush(file);
-    curl_easy_cleanup(curl);
     fclose(file);
+    pthread_mutex_unlock(&mutex);
+    curl_easy_cleanup(curl);
     curl_global_cleanup();
+    LogInfo("Downloading finished successfully");
 }
