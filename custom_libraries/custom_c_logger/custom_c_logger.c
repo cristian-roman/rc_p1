@@ -2,6 +2,7 @@
 
 #include <dirent.h>
 #include <malloc.h>
+#include <pthread.h>
 #include <sys/stat.h>
 #include <stdarg.h>
 #include <string.h>
@@ -70,14 +71,17 @@ void PrintMessage(const char* log_level, const char* build_time, const char* log
     }
 }
 
+static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 
 void LogMessage(const char* log_level, const char* build_time, const char* log_message) {
 
+    pthread_mutex_lock(&mutex);
     for(int i = 0; i < total_number_of_locations; i++) {
         FILE* fp = fopen(log_file_paths[i], "a+");
         fprintf(fp, "[%s] [%s]:\n%s\n", build_time, log_level, log_message);
         fclose(fp);
     }
+    pthread_mutex_unlock(&mutex);
 
     if(STDOUT_FD != -1) {
         PrintMessage(log_level, build_time, log_message);
