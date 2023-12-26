@@ -6,6 +6,6 @@
 #define SERVER_MYSTRING_H
 
 char* CombineStrings(int numStrings, int total_size, ...);
-char* GetStringFromPattern(const char* pattern, const int total_size, ...);
-
+char* DuplicateString(const char* string);
+void EnsureNullOverTheBuffer(char* string, int size);
 #endif //SERVER_MYSTRING_H

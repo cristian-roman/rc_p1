@@ -13,26 +13,32 @@ char* CombineStrings(const int numStrings, int total_size, ...) {
     va_start(args, numStrings);
     for(int i = 0; i < numStrings; i++) {
         const char* str = va_arg(args, const char*);
-        if(writen_size + strlen(str) > total_size) {
+        const int str_length = strlen(str);
+        if(writen_size + str_length > total_size) {
             total_size *= 2;
             result = realloc(result, total_size);
         }
-        strcpy(result + writen_size, str);
-        writen_size += strlen(str);
+        strncpy(result + writen_size, str, str_length);
+        writen_size += str_length;
     }
 
     va_end(args);
+    EnsureNullOverTheBuffer(result, writen_size);
     return result;
 }
 
-char* GetStringFromPattern(const char* pattern, const int total_size, ...) {
 
-    char* string = calloc(total_size + 10, sizeof(char));
+char* DuplicateString(const char* string) {
+    const int lng = strlen(string);
+    char* copy = calloc(lng+1, sizeof(char));
+    strncpy(copy, string, lng);
+    EnsureNullOverTheBuffer(copy, lng);
+    return copy;
+}
 
-    va_list args;
-    va_start(args, total_size);
-    vsnprintf(string, total_size, pattern, args);
-    va_end(args);
-
-    return string;
+void EnsureNullOverTheBuffer(char* string, const int size) {
+    const int buffer_length = strlen(string);
+    for(int i = size; i < buffer_length; i++) {
+        string[i] = '\0';
+    }
 }

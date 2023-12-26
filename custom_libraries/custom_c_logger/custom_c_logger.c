@@ -2,10 +2,13 @@
 
 #include <dirent.h>
 #include <malloc.h>
-#include <pthread.h>
 #include <sys/stat.h>
 #include <stdarg.h>
 #include <string.h>
+#include <fcntl.h>
+#include <sys/file.h>
+#include <errno.h>
+#include <unistd.h>
 
 #include "../system_info/system_info.h"
 
@@ -71,17 +74,42 @@ void PrintMessage(const char* log_level, const char* build_time, const char* log
     }
 }
 
-static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+int LockFile(const char* file_path, int* lock_fd) {
+    *lock_fd = open(file_path, O_RDWR | O_CREAT, 0644);
+    if (*lock_fd == -1) {
+        return -1;  // Failed to open the file
+    }
+
+    // Try to acquire a lock on the file, entering a retry loop if it's already locked
+    while (flock(*lock_fd, LOCK_EX | LOCK_NB) == -1) {
+        if (errno == EWOULDBLOCK) {
+            // Another process holds the lock, retry after a delay
+            sleep(1);
+        } else {
+            // Some other error occurred
+            close(*lock_fd);
+            return -1;
+        }
+    }
+
+    return 0;  // Lock acquired successfully
+}
 
 void LogMessage(const char* log_level, const char* build_time, const char* log_message) {
-
-    pthread_mutex_lock(&mutex);
     for(int i = 0; i < total_number_of_locations; i++) {
-        FILE* fp = fopen(log_file_paths[i], "a+");
-        fprintf(fp, "[%s] [%s]:\n%s\n", build_time, log_level, log_message);
-        fclose(fp);
+        int lock_fd;
+        if (LockFile(log_file_paths[i], &lock_fd) == 0) {
+            FILE* fp = fopen(log_file_paths[i], "a+");
+            if (fp != NULL) {
+                fprintf(fp, "[%s] [%s]:\n%s\n", build_time, log_level, log_message);
+                fclose(fp);
+            }
+
+            // Release the lock on the file
+            flock(lock_fd, LOCK_UN);
+            close(lock_fd);
+        }
     }
-    pthread_mutex_unlock(&mutex);
 
     if(STDOUT_FD != -1) {
         PrintMessage(log_level, build_time, log_message);
@@ -101,6 +129,7 @@ void AddTodayFolderToPaths() {
         }
         
         current_path = realloc(current_path, strlen(current_path) + strlen(today_date) + 2);
+        bzero(current_path + strlen(current_path), strlen(today_date) + 2);
         sprintf(current_path, "%s/%s", current_path, today_date);
         log_file_paths[i] = current_path;
 
@@ -120,6 +149,7 @@ void AttacheLogFileToPaths() {
         const char* extension = ".log";
         char* current_path = log_file_paths[i];
         current_path = realloc(current_path, strlen(current_path) + strlen(build_time) + strlen(extension) + 2);
+        bzero(current_path + strlen(current_path), strlen(build_time) + strlen(extension) + 2);
         sprintf(current_path, "%s/log_%s%s", current_path, build_time, extension);
         log_file_paths[i] = current_path;
 
