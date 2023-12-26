@@ -54,7 +54,9 @@ int IsCharacterInvalid(const char c) {
            c == '}' ||
            c == '$' ||
            c == '[' ||
-           c == ']';
+           c == ']' ||
+           c < 32 ||
+           c > 126;
 }
 
 int ContainsInvalidCharacters(const char* resource)
