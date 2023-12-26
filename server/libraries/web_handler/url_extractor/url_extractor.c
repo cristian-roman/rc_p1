@@ -165,7 +165,8 @@ void AddResourcesToUrlTable(const struct UrlTable* url_table, const struct Folde
 {
     if(strstr(folder_resource_pair->resource, ".css") == NULL &&
        strstr(folder_resource_pair->resource, ".js") == NULL &&
-       strstr(folder_resource_pair->resource, ".html") == NULL)
+       strstr(folder_resource_pair->resource, ".html") == NULL &&
+       strstr(folder_resource_pair->resource, ".php") == NULL)
     {
         return;
     }
@@ -196,21 +197,20 @@ void AddResourcesToUrlTable(const struct UrlTable* url_table, const struct Folde
                 "/",
                 resource);
         }
+        free(resource);
+
 
         if(new_url == NULL || strlen(new_url) == 0 || !IsUrl(new_url))
         {
-            free(new_url);
+            if(new_url!= NULL)
+                free(new_url);
             continue;
         }
 
-        strlen(new_url);
-
         const int depth = GetUrlDepth(new_url);
-
         AddUrlToTable(url_table, new_url, depth);
 
         free(new_url);
-        free(resource);
     }
 
     free(root_url);
