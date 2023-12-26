@@ -1,0 +1,2 @@
+add_library(custom_c_hashset custom_c_hashset.c custom_c_hashset.h)
+target_include_directories(custom_c_hashset PRIVATE custom_c_string custom_c_logger)

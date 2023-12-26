@@ -1,0 +1,1 @@
+add_library(custom_boyer_moore custom_boyer_moore.c custom_boyer_moore.h)

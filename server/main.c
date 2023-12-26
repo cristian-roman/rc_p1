@@ -2,9 +2,9 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <pthread.h>
+#include <stdio.h>
 #include <string.h>
 
-#include "custom_c_string.h"
 #include "custom_c_logger.h"
 #include "libraries/server_network/server_network.h"
 #include "libraries/client_handler/client_handler.h"
@@ -30,7 +30,8 @@ int main() {
             if (fd != SERVER_SOCKET && FD_ISSET(fd, &READ_FDS))
             {
                 const char* pattern = "Server treating request coming from client with file descriptor: %d";
-                char* messageFromPattern = GetStringFromPattern(pattern, strlen(pattern) + 10, fd);
+                char* messageFromPattern = calloc(strlen(pattern) + 10, sizeof(char));
+                sprintf(messageFromPattern, pattern, fd);
                 LogInfo(messageFromPattern);
                 free(messageFromPattern);
 

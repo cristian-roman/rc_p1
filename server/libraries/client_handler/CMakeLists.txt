@@ -1,2 +1,2 @@
 add_library(client_handler client_handler.c client_handler.h)
-target_include_directories(server_network PRIVATE custom_c_string custom_c_logger server_network)
+target_include_directories(client_handler PRIVATE custom_c_string custom_c_logger server_network url_handler)

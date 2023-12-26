@@ -21,7 +21,7 @@ int main(const int argc, char** argv) {
     }
 
     if (strcmp(argv[1], "--single-client") == 0) {
-        printf("Please provide two parameters separated by enter(new line):\n- a string representing a valid URL\n- and a positive number representing the depth of the search: \n");
+        printf("Please provide two parameters separated by enter(new line):\n- a string representing a valid URL\n- and a non-negative number representing the depth of the search: \n");
 
         char* url = ReadURL();
 
@@ -33,7 +33,7 @@ int main(const int argc, char** argv) {
             url = ReadURL();
         }
 
-        while(depth < 1) {
+        while(depth < 0) {
             LogError("Invalid depth. Type a positive number:");
             depth = ReadDepth();
         }

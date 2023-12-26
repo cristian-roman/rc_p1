@@ -1,3 +1,3 @@
 add_library(web_handler web_handler.c web_handler.h)
-target_include_directories(web_handler PRIVATE custom_c_string custom_c_logger file_hierarchy_creator downloader url_extractor)
-target_link_libraries(web_handler PRIVATE custom_c_string custom_c_logger curl file_hierarchy_creator downloader url_extractor)
+target_include_directories(web_handler PRIVATE custom_c_string custom_c_logger file_hierarchy_creator downloader url_table url_extractor)
+target_link_libraries(web_handler PRIVATE custom_c_string custom_c_logger curl file_hierarchy_creator downloader url_table url_extractor)
