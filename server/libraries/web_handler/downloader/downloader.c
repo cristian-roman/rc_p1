@@ -3,24 +3,52 @@
 //
 
 #include "downloader.h"
-#include <pthread.h>
 
+#include <errno.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <curl/curl.h>
+#include <fcntl.h>
+#include <sys/file.h>
 
 #include "../../../../custom_libraries/custom_c_logger/custom_c_logger.h"
-#include "../../../../custom_libraries/custom_c_string/custom_c_string.h"
 
-static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+#define FreeResources \
+    fflush(file); \
+    fclose(file); \
+    flock(lock_fd, LOCK_UN); \
+    close(lock_fd); \
+    curl_easy_cleanup(curl); \
+    curl_global_cleanup();
 
-static size_t write_data(const void *ptr, const size_t size, const size_t nmemb, FILE *stream) {
+
+static size_t WriteData(const void *ptr, const size_t size, const size_t nmemb, FILE *stream) {
     return fwrite(ptr, size, nmemb, stream);
 }
 
 void DownloadOneResource(char* url, const char* path_to_resource) {
-    pthread_mutex_lock(&mutex);
+
+    const int lock_fd = open(path_to_resource, O_RDWR | O_CREAT, 0644);
+    if (lock_fd == -1) {
+        LogError("Failed to open file to save the document. Download interrupted");
+        return;
+    }
+
+    // Try to acquire a lock on the file, entering a retry loop if it's already locked
+    while (flock(lock_fd, LOCK_EX | LOCK_NB) == -1) {
+        if (errno == EWOULDBLOCK) {
+            // Another process holds the lock, retry after a delay
+            LogWarning("Another process holds the lock. Retrying...");
+            sleep(5);
+        } else {
+            // Some other error occurred
+            LogError("Failed to acquire lock on the file. Download interrupted");
+            close(lock_fd);
+            return;
+        }
+    }
+
     FILE* file = fopen(path_to_resource, "w");
     if(file == NULL)
     {
@@ -32,7 +60,8 @@ void DownloadOneResource(char* url, const char* path_to_resource) {
     const long current_pos = ftell(file);
 
     const char* pattern = "Downloading resources from URL: %s";
-    char* message = GetStringFromPattern(pattern, strlen(pattern) + strlen(url) + 10, url);
+    char* message = calloc (strlen(pattern) + strlen(url) + 10, sizeof(char));
+    sprintf(message, pattern, url);
     LogInfo(message);
     free(message);
 
@@ -41,7 +70,7 @@ void DownloadOneResource(char* url, const char* path_to_resource) {
     if(curl == NULL)
     {
         LogError("Failed to initialize curl. Download interrupted");
-        curl_global_cleanup();
+        FreeResources
         return;
     }
 
@@ -51,7 +80,7 @@ void DownloadOneResource(char* url, const char* path_to_resource) {
         curl_easy_setopt(curl, CURLOPT_RESUME_FROM_LARGE, current_pos);
     }
 
-    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_data);
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteData);
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, file);
 
     LogInfo("Downloading started...");
@@ -60,7 +89,8 @@ void DownloadOneResource(char* url, const char* path_to_resource) {
     int sleep_time = 5;
     for (int tries = 0; tries < 3 && res == CURLE_PARTIAL_FILE; tries++) {
         pattern = "Failed to download the page. Retrying in %d seconds... (Try %d/3)";
-        message = GetStringFromPattern(pattern, strlen(pattern) + 10, sleep_time, tries + 1);
+        message = calloc(strlen(pattern) + 20, sizeof(char));
+        sprintf(message, pattern, sleep_time, tries+1);
         LogWarning(message);
         free(message);
 
@@ -76,19 +106,15 @@ void DownloadOneResource(char* url, const char* path_to_resource) {
     if(res!=CURLE_OK)
     {
         pattern = "Failed to download the page. Error code: %d";
-        message = GetStringFromPattern(pattern, strlen(pattern) + 10, res);
+        message = calloc(strlen(pattern) + 10, sizeof(char));
+        sprintf(message, pattern, res);
         LogError(message);
         free(message);
-        fclose(file);
-        curl_easy_cleanup(curl);
-        curl_global_cleanup();
+        FreeResources
         return;
     }
 
-    fflush(file);
-    fclose(file);
-    pthread_mutex_unlock(&mutex);
-    curl_easy_cleanup(curl);
-    curl_global_cleanup();
+    FreeResources
+
     LogInfo("Downloading finished successfully");
 }

@@ -8,7 +8,6 @@
 #include <unistd.h>
 
 #include "../../../custom_libraries/custom_c_logger/custom_c_logger.h"
-#include "../../../custom_libraries/custom_c_string/custom_c_string.h"
 
 enum OperationStatus NETWORK_OPERATION_STATUS;
 
@@ -66,7 +65,8 @@ void BindServerSocket()
     }
 
     const char* pattern = "Server application has successfully set the socket:\n- Accepts IpV4 addresses\n- Can be found at port: %d\n- Accepts requests coming from any ip address";
-    char* messageFromPattern = GetStringFromPattern(pattern, strlen(pattern) + 10, PORT);
+    char* messageFromPattern = calloc(strlen(pattern) + 10, sizeof(char));
+    sprintf(messageFromPattern, pattern, PORT);
     LogInfo(messageFromPattern);
     free(messageFromPattern);
 
@@ -82,7 +82,8 @@ void OpenPortForListening()
     }
 
     const char* pattern = "Server application has successfully opened the socket for listening on port %d";
-    char* messageFromPattern = GetStringFromPattern(pattern, strlen(pattern) + 10, PORT);
+    char* messageFromPattern = calloc(strlen(pattern) + 10, sizeof(char));
+    sprintf(messageFromPattern, pattern, PORT);
     LogInfo(messageFromPattern);
     free(messageFromPattern);
     NETWORK_OPERATION_STATUS = SUCCEEDED;
@@ -128,7 +129,8 @@ void WaitForClients()
 
         FD_SET(client_socket, &READ_FDS);
         const char* pattern = "Server application found a new client at fd: %d.";
-        char* messageFromPattern = GetStringFromPattern(pattern, strlen(pattern) + 10, client_socket);
+        char* messageFromPattern = calloc(strlen(pattern) + 10, sizeof(char));
+        sprintf(messageFromPattern, pattern, client_socket);
         LogInfo(messageFromPattern);
         free(messageFromPattern);
         NETWORK_OPERATION_STATUS = SUCCEEDED;

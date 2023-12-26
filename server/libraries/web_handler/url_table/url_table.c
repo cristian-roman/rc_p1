@@ -16,9 +16,13 @@ struct UrlTable* InitUrlTable(const char* url, const int depth, const int max_de
     struct UrlTable* url_table = malloc(sizeof(struct UrlTable));
 
     url_table->url_table = malloc(sizeof(char**) * (max_depth+1));
-    url_table->url_table[depth] = malloc(sizeof(char*)); // dimension for first url pointer
-    url_table->url_table[depth][0] = malloc(sizeof(char) * strlen(url));  // dimension for first url
-    strcpy(url_table->url_table[depth][0], url);
+    url_table->url_table[depth] = malloc(sizeof(char*));
+
+    const int url_length = strlen(url);
+
+    url_table->url_table[depth][0] = calloc(url_length + 10, sizeof(char));
+    strncpy(url_table->url_table[depth][0], url, url_length);
+    EnsureNullOverTheBuffer(url_table->url_table[depth][0], url_length);
 
     url_table->read_url_count = malloc(sizeof(int) * (max_depth+1));
     bzero(url_table->read_url_count, sizeof(int) * (max_depth+1));
@@ -40,30 +44,35 @@ struct UrlTable* InitUrlTable(const char* url, const int depth, const int max_de
 }
 
 void LogUrlTable(const struct UrlTable* url_table) {
-    char* log_message = malloc(sizeof(char) * 100);
-    int max_length = 100;
-    sprintf(log_message, "Max depth: %d", url_table->max_depth);
-    int current_length = strlen(log_message);
+
+    const char* starting_line = "Url table overview:\n";
+    char* log_message = strdup(starting_line);
 
     for(int i = 0; i <= url_table->max_depth; i++) {
-        sprintf(log_message, "%s\nFor depth %d: %d/%d urls read. Urls left to be read:", log_message, i, url_table->read_url_count[i], url_table->total_url_count[i]);
-        current_length = strlen(log_message);
-        if(current_length > 0.8 * current_length) {
-            max_length *= 2;
-            log_message = realloc(log_message, sizeof(char) * max_length);
-        }
+        const char* line_message_pattern = "For depth %d: %d/%d urls read. Urls left to be read:\n";
+        char* line_message = calloc(strlen(line_message_pattern) + 30, sizeof(char));
+        sprintf(line_message, line_message_pattern, i, url_table->read_url_count[i], url_table->total_url_count[i]);
+        char* tmp_message = CombineStrings(2, strlen(log_message) + strlen(line_message) + 10, log_message, line_message);
+        free(log_message);
+        free(line_message);
+        log_message = tmp_message;
+
         for(int j = url_table->read_url_count[i]; j < url_table->total_url_count[i]; j++) {
-            sprintf(log_message, "%s\n  - %s", log_message, url_table->url_table[i][j]);
-            if(current_length > 0.8 * current_length) {
-                max_length *= 2;
-                log_message = realloc(log_message, sizeof(char) * max_length);
-            }
+            const char* url_line_pattern = "- %s\n";
+            char* url_line = calloc(strlen(url_table->url_table[i][j]) + 10, sizeof(char));
+            sprintf(url_line, url_line_pattern, url_table->url_table[i][j]);
+            tmp_message = CombineStrings(2, strlen(log_message) + strlen(url_line) + 10, log_message, url_line);
+            free(log_message);
+            free(url_line);
+            log_message = tmp_message;
         }
+
     }
 
     LogInfo(log_message);
     free(log_message);
 }
+
 
 void AddUrlToTable(const struct UrlTable* url_table, const char* new_url, const int depth) {
     if(depth > url_table->max_depth) {
@@ -75,19 +84,22 @@ void AddUrlToTable(const struct UrlTable* url_table, const char* new_url, const 
     }
 
     if(url_table->total_url_count[depth] == 0) {
-        url_table->url_table[depth] = malloc(sizeof(char*));
+        url_table->url_table[depth] = calloc(1,sizeof(char*));
     }
 
     url_table->total_url_count[depth] += 1;
 
     url_table->url_table[depth] = realloc(url_table->url_table[depth], sizeof(char*) * url_table->total_url_count[depth]);
-    url_table->url_table[depth][url_table->total_url_count[depth] - 1] = malloc(sizeof(char) * strlen(new_url));
-    strcpy(url_table->url_table[depth][url_table->total_url_count[depth] - 1], new_url);
+    const int new_url_length = strlen(new_url);
+    url_table->url_table[depth][url_table->total_url_count[depth] - 1] = calloc(new_url_length + 10, sizeof(char));
+    strncpy(url_table->url_table[depth][url_table->total_url_count[depth] - 1], new_url, new_url_length);
+    EnsureNullOverTheBuffer(url_table->url_table[depth][url_table->total_url_count[depth] - 1], new_url_length);
 
     AddToHashSet(url_table->url_set, new_url);
 
     const char* pattern = "Added url %s to url table";
-    char* log_message = GetStringFromPattern(pattern, strlen(pattern) + strlen(new_url) + 10, new_url);
+    char* log_message = calloc(strlen(pattern) + strlen(new_url) + 10, sizeof(char));
+    sprintf(log_message, pattern, new_url);
     LogInfo(log_message);
     free(log_message);
 }

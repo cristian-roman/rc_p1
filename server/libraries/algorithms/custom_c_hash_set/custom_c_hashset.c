@@ -15,9 +15,10 @@
 
 unsigned long GetHashCode(const char* str) {
     unsigned long hash = 5381;
-    int c;
 
-    while ((c = *str++)) {
+    const int len = strlen(str);
+    for(int i = 0; i < len; i++) {
+        const int c = str[i];
         hash = (hash << 5) + hash + c;
     }
 
@@ -25,7 +26,7 @@ unsigned long GetHashCode(const char* str) {
 }
 
 struct HashSet* InitHashSet() {
-    struct HashSet* set = malloc(sizeof(struct HashSet));
+    struct HashSet* set = calloc(1, sizeof(struct HashSet));
     if (set == NULL) {
         LogError("Memory allocation for url set error");
         exit(EXIT_FAILURE);
@@ -77,14 +78,22 @@ void AddToHashSet(struct HashSet* set, const char* key) {
     const unsigned long hash = GetHashCode(key);
     size_t index = hash % set->capacity;
 
+    const int key_length = strlen(key);
     while (set->array[index] != NULL) {
-        if (strcmp(set->array[index], key) == 0) {
-            return;
+        const int current_length = strlen(set->array[index]);
+        if (key_length == current_length) {
+            int i = 0;
+            while(i < key_length && key[i] == set->array[index][i])
+                i++;
+            if(i == key_length)
+                return;
         }
         index = (index + 1) % set->capacity;
     }
 
-    set->array[index] = strdup(key);
+    set->array[index] = calloc(key_length, sizeof(char));
+    for(int i = 0; i < key_length; i++)
+        set->array[index][i] = key[i];
     set->size++;
 }
 
@@ -92,9 +101,15 @@ int IsInHashSet(const struct HashSet* set, const char* key) {
     const unsigned long hash = GetHashCode(key);
     size_t index = hash % set->capacity;
 
+    const int key_length = strlen(key);
     while (set->array[index] != NULL) {
-        if (strcmp(set->array[index], key) == 0) {
-            return 1;
+        const int current_length = strlen(set->array[index]);
+        if (key_length == current_length) {
+            int i = 0;
+            while(i < key_length && key[i] == set->array[index][i])
+                i++;
+            if(i == key_length)
+                return 1;
         }
         index = (index + 1) % set->capacity;
     }

@@ -15,7 +15,8 @@
 
 struct Folder_Resource_Pair* DownloadResource(char* url) {
     const char* pattern = "At %s. Creating hierarchy for downloaded resources";
-    char* message = GetStringFromPattern(pattern, strlen(pattern) + strlen(url) + 10, url);
+    char* message = calloc(strlen(pattern) + strlen(url) + 10, sizeof(char));
+    sprintf(message, pattern, url);
     LogInfo(message);
     free(message);
 
@@ -54,7 +55,8 @@ void DumpUrlTable(struct UrlTable* url_table, const int current_depth, const int
     }
 
     const char* pattern = "Dumping for depth %d [1/2]";
-    char* log_message = GetStringFromPattern(pattern, strlen(pattern) + 10, current_depth);
+    char* log_message = calloc(strlen(pattern) + 10, sizeof(char));
+    sprintf(log_message, pattern, current_depth);
     LogInfo(log_message);
     free(log_message);
     for(url_table->read_url_count[current_depth] = 0;
@@ -72,13 +74,15 @@ void DumpUrlTable(struct UrlTable* url_table, const int current_depth, const int
         }
 
     pattern = "Finished dumping for depth %d [1/2]. Going to next depth...";
-    log_message = GetStringFromPattern(pattern, strlen(pattern) + 10, current_depth);
+    log_message = calloc(strlen(pattern) + 10, sizeof(char));
+    sprintf(log_message, pattern, current_depth);
     LogInfo(log_message);
     free(log_message);
     DumpUrlTable(url_table, current_depth + 1, max_depth);
 
     pattern = "Dumping for depth %d [2/2]";
-    log_message = GetStringFromPattern(pattern, strlen(pattern) + 10, current_depth);
+    log_message = calloc(strlen(pattern) + 10, sizeof(char));
+    sprintf(log_message, pattern, current_depth);
     LogInfo(log_message);
     free(log_message);
 
@@ -92,7 +96,8 @@ void DumpUrlTable(struct UrlTable* url_table, const int current_depth, const int
 
     }
     pattern = "Finished dumping for depth %d";
-    log_message = GetStringFromPattern(pattern, strlen(pattern) + 10, current_depth);
+    log_message = calloc(strlen(pattern) + 10, sizeof(char));
+    sprintf(log_message, pattern, current_depth);
     LogInfo(log_message);
     free(log_message);
     LogUrlTable(url_table);

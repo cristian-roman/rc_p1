@@ -5,11 +5,13 @@
 #include "url_handler.h"
 
 #include <ctype.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "../../../../custom_libraries/custom_c_logger/custom_c_logger.h"
 #include "../../../../custom_libraries/custom_c_string/custom_c_string.h"
+#include "../../algorithms/custom_boyer_moore/custom_boyer_moore.h"
 
 char* RemoveUrlPrefix(const char* url)
 {
@@ -17,19 +19,18 @@ char* RemoveUrlPrefix(const char* url)
 
     if(strncmp(url, "http://", 7) == 0)
     {
-        url_without_copy = (char*)malloc(strlen(url) - 6);
-        strcpy(url_without_copy, url + 7);
+        url_without_copy = DuplicateString(url + 7);
     }
     else if(strncmp(url, "https://", 8) == 0)
     {
-        url_without_copy = (char*)malloc(strlen(url) - 7);
-        strcpy(url_without_copy, url + 8);
+        url_without_copy = DuplicateString(url + 8);
     }
     else
     {
         const char* pattern = "Prefix extractor failed for link: %s";
-        char* message = GetStringFromPattern(pattern, strlen(pattern) + strlen(url) + 10, url);
-        LogError("Prefix extractor failed for link: %s");
+        char* message = calloc(strlen(pattern) + strlen(url) + 10, sizeof(char));
+        sprintf(message, pattern, url);
+        LogError(message);
         free(message);
     }
 
@@ -39,7 +40,7 @@ char* RemoveUrlPrefix(const char* url)
 
 char* RemoveLastSlash(const char* url)
 {
-    char* url_copy = strdup(url);
+    char* url_copy = DuplicateString(url);
 
     const int len = strlen(url_copy);
     if(url_copy[len - 1] == '/')
@@ -52,17 +53,18 @@ char* RemoveLastSlash(const char* url)
 
 
 struct Tokens_Length_Pair* ExtractUrlTokens(const char* url) {
-    struct Tokens_Length_Pair* tokens_length_pair = malloc(sizeof(struct Tokens_Length_Pair));
-    tokens_length_pair->tokens = malloc(sizeof(char*));
+    struct Tokens_Length_Pair* tokens_length_pair = calloc(1, sizeof(struct Tokens_Length_Pair));
+    tokens_length_pair->tokens = calloc(1, sizeof(char*));
     tokens_length_pair->length = 0;
 
-    char* url_copy = strdup(url);
+    char* url_copy = DuplicateString(url);
     const char* token = strtok(url_copy, "/");
 
     while(token != NULL) {
         tokens_length_pair->length += 1;
         tokens_length_pair->tokens = realloc(tokens_length_pair->tokens, tokens_length_pair->length * sizeof(char*));
-        tokens_length_pair->tokens[tokens_length_pair->length - 1] = strdup(token);
+        bzero(tokens_length_pair->tokens + tokens_length_pair->length - 1, sizeof(char*) * 1);
+        tokens_length_pair->tokens[tokens_length_pair->length - 1] = DuplicateString(token);
         token = strtok(NULL, "/");
     }
 
@@ -97,20 +99,21 @@ int TokenHasExtension(const char* token) {
 }
 
 char* GetUrlWithoutResource(const char* url) {
-    char* url_without_resource = strdup(url);
+    char* url_without_resource = DuplicateString(url);
 
     if(!TokenHasExtension(url_without_resource)) {
-        if(url_without_resource[strlen(url_without_resource) - 1] == '/') {
-            url_without_resource[strlen(url_without_resource) - 1] = '\0';
+        const int length = strlen(url_without_resource);
+        if(url_without_resource[length - 1] == '/') {
+            url_without_resource[length - 1] = '\0';
         }
         return url_without_resource;
     }
     int len = 0;
     if(strstr(url_without_resource, "http://") != NULL) {
-        len = strlen("http://");
+        len = 7;
     }
     else if(strstr(url_without_resource, "https://") != NULL) {
-        len = strlen("https://");
+        len = 8;
     }
 
     const char* last_slash = strrchr(url_without_resource+len, '/');
@@ -138,21 +141,21 @@ int IsUrl(const char* str) {
 char* GetBaseUrl(const char* url) {
     int len = 0;
     if(strstr(url, "http://") != NULL) {
-        len = strlen("http://");
+        len = 7;
     }
-    else if(strstr(url, "https://") != NULL) {
-        len = strlen("https://");
+    else if(BoyerMooreSearch(url, "https://") != -1) {
+        len = 8;
     }
 
     const char* first_slash = strchr(url+len, '/');
     char* root_url;
     if(first_slash != NULL) {
         len = first_slash-url;
-        root_url = malloc(len);
+        root_url = calloc(len, sizeof(char));
         strncpy(root_url, url, len);
     }
     else {
-        root_url = strdup(url);
+        root_url = DuplicateString(url);
     }
 
     return root_url;

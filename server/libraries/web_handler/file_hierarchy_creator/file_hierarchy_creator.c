@@ -5,6 +5,7 @@
 #include "file_hierarchy_creator.h"
 
 #include <dirent.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
@@ -27,7 +28,8 @@ void CreateFolder(const char* path, const char* folder_name)
     if(mkdir(new_path, 0777) == -1)
     {
         const char* pattern = "Folder '%s' could not be created. It is possible that it already exists.";
-        char* message = GetStringFromPattern(pattern, strlen(pattern) + strlen(new_path) + 10, new_path);
+        char* message = calloc(strlen(pattern) + strlen(new_path) + 10, sizeof(char));
+        sprintf(message, pattern, new_path);
         LogWarning(message);
         free(message);
         free(new_path);
@@ -41,7 +43,7 @@ char* WalkFromStartToResourceLocation(const char* start_location, const char* ur
     const struct Tokens_Length_Pair* tokens_length_pair = ExtractUrlTokens(url_without_last_slash);
     free(url_without_last_slash);
 
-    char* path = strdup(start_location);
+    char* path = DuplicateString(start_location);
 
     for(int i = 0; i < tokens_length_pair->length-1; i++)
     {
@@ -78,7 +80,7 @@ void CreateHierarchyFromUrl(const char* starting_location, const char* url)
 
 struct Folder_Resource_Pair* GetPathToResource(const char* starting_location, const char* url) {
 
-    struct Folder_Resource_Pair* folder_resource_pair = malloc(sizeof(struct Folder_Resource_Pair));
+    struct Folder_Resource_Pair* folder_resource_pair = calloc(1, sizeof(struct Folder_Resource_Pair));
     folder_resource_pair->folder = WalkFromStartToResourceLocation(starting_location, url, 0);
 
     const struct Tokens_Length_Pair* tokens_length_pair = ExtractUrlTokens(url);

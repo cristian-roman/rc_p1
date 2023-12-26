@@ -30,10 +30,12 @@ char* GetResource(const char* location) {
     int capacity = 10;
     char* resource = calloc(capacity, sizeof(char));
     int i = 0;
-    while (location[i] != '"' && location[i] != '\0') {
+    const int lng = strlen(location);
+    while (i < lng && location[i] != '"' && location[i] != '\0') {
         if (i == capacity) {
             capacity *= 2;
             resource = realloc(resource, capacity * sizeof(char));
+            bzero(resource + i, capacity / 2);
         }
         resource[i] = location[i];
         i++;
@@ -100,14 +102,14 @@ struct Resources_Lenght_Pair* ExtractRelativeUrls(const char* resource_path)
     if(file == NULL)
     {
         const char* pattern = "Failed to open file %s. URL Extracting interrupted";
-        char* message = GetStringFromPattern(pattern, strlen(pattern) + strlen(resource_path) + 10, resource_path);
+        char* message = calloc(strlen(pattern) + strlen(resource_path) + 10, sizeof(char));
         LogError(message);
         free(message);
         return NULL;
     }
 
-    struct Resources_Lenght_Pair* answer = malloc(sizeof(struct Resources_Lenght_Pair));
-    answer->resources = malloc(sizeof(char*));
+    struct Resources_Lenght_Pair* answer = calloc(1, sizeof(struct Resources_Lenght_Pair));
+    answer->resources = calloc(1, sizeof(char*));
     answer->lenght = 0;
 
     char* line = NULL;
@@ -137,7 +139,7 @@ struct Resources_Lenght_Pair* ExtractRelativeUrls(const char* resource_path)
                 }
 
                 answer->lenght++;
-                char** new_resources = malloc(answer->lenght * sizeof(char*));
+                char** new_resources = calloc(answer->lenght, sizeof(char*));
                 for(int j = 0; j < answer->lenght - 1; j++)
                 {
                     new_resources[j] = answer->resources[j];
@@ -200,6 +202,8 @@ void AddResourcesToUrlTable(const struct UrlTable* url_table, const struct Folde
             free(new_url);
             continue;
         }
+
+        strlen(new_url);
 
         const int depth = GetUrlDepth(new_url);
 
