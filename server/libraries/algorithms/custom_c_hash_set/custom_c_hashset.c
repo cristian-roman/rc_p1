@@ -9,9 +9,10 @@
 #include <string.h>
 
 #include "../../../../custom_libraries/custom_c_logger/custom_c_logger.h"
+#include "../../../../custom_libraries/custom_c_string/custom_c_string.h"
 
 #define INITIAL_CAPACITY 16
-#define LOAD_FACTOR 0.75
+#define LOAD_FACTOR 0.6
 
 unsigned long GetHashCode(const char* str) {
     unsigned long hash = 5381;
@@ -71,6 +72,10 @@ void ResizeHashSet(struct HashSet* set) {
 }
 
 void AddToHashSet(struct HashSet* set, const char* key) {
+
+    if(IsInHashSet(set, key))
+        return;
+
     if ((double)set->size / set->capacity > LOAD_FACTOR) {
         ResizeHashSet(set);
     }
@@ -78,22 +83,11 @@ void AddToHashSet(struct HashSet* set, const char* key) {
     const unsigned long hash = GetHashCode(key);
     size_t index = hash % set->capacity;
 
-    const int key_length = strlen(key);
     while (set->array[index] != NULL) {
-        const int current_length = strlen(set->array[index]);
-        if (key_length == current_length) {
-            int i = 0;
-            while(i < key_length && key[i] == set->array[index][i])
-                i++;
-            if(i == key_length)
-                return;
-        }
         index = (index + 1) % set->capacity;
     }
 
-    set->array[index] = calloc(key_length, sizeof(char));
-    for(int i = 0; i < key_length; i++)
-        set->array[index][i] = key[i];
+    set->array[index] = DuplicateString(key);
     set->size++;
 }
 
@@ -101,16 +95,9 @@ int IsInHashSet(const struct HashSet* set, const char* key) {
     const unsigned long hash = GetHashCode(key);
     size_t index = hash % set->capacity;
 
-    const int key_length = strlen(key);
     while (set->array[index] != NULL) {
-        const int current_length = strlen(set->array[index]);
-        if (key_length == current_length) {
-            int i = 0;
-            while(i < key_length && key[i] == set->array[index][i])
-                i++;
-            if(i == key_length)
-                return 1;
-        }
+       if(strcmp(set->array[index], key) == 0)
+           return 1;
         index = (index + 1) % set->capacity;
     }
 

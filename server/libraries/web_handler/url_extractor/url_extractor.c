@@ -57,6 +57,7 @@ int IsCharacterInvalid(const char c) {
            c == '$' ||
            c == '[' ||
            c == ']' ||
+           c == '=' ||
            c < 32 ||
            c > 126;
 }
@@ -88,6 +89,10 @@ int CheckForTreeFileStructure(const char* resource) {
 
 int IsResourceValid(const char* resource)
 {
+    if(resource[0] == '?') {
+        return 0;
+    }
+
     if(ContainsInvalidCharacters(resource))
         return 0;
 
