@@ -87,11 +87,53 @@ int TokenHasExtension(const char* token) {
 
     const int len = strlen(dot_location+1);
     if(len >= 1 && len <= 5) {
-        for (int i = 1; i < len; i++) {
+        char* extension = calloc(len, sizeof(char));
+        for (int i = 1; i <= len; i++) {
             if (!isalpha(dot_location[i])) {
+                free(extension);
                 return 0;
             }
+            extension[i - 1] = tolower(dot_location[i]);
         }
+        printf("%s\n", extension);
+        if(strcmp(extension, "com") == 0 ||
+            strcmp(extension, "org") == 0 ||
+            strcmp(extension, "net") == 0 ||
+            strcmp(extension, "gov") == 0 ||
+            strcmp(extension, "edu") == 0 ||
+            strcmp(extension, "mil") == 0 ||
+            strcmp(extension, "ro") == 0 ||
+            strcmp(extension, "eu") == 0 ||
+            strcmp(extension, "uk") == 0 ||
+            strcmp(extension, "us") == 0 ||
+            strcmp(extension, "de") == 0 ||
+            strcmp(extension, "fr") == 0 ||
+            strcmp(extension, "it") == 0 ||
+            strcmp(extension, "es") == 0 ||
+            strcmp(extension, "ca") == 0 ||
+            strcmp(extension, "au") == 0 ||
+            strcmp(extension, "ru") == 0 ||
+            strcmp(extension, "ch") == 0 ||
+            strcmp(extension, "jp") == 0 ||
+            strcmp(extension, "nl") == 0 ||
+            strcmp(extension, "se") == 0 ||
+            strcmp(extension, "no") == 0 ||
+            strcmp(extension, "pt") == 0 ||
+            strcmp(extension, "be") == 0 ||
+            strcmp(extension, "dk") == 0 ||
+            strcmp(extension, "fi") == 0 ||
+            strcmp(extension, "gr") == 0 ||
+            strcmp(extension, "pl") == 0 ||
+            strcmp(extension, "cz") == 0 ||
+            strcmp(extension, "hu") == 0 ||
+            strcmp(extension, "kr") == 0 ||
+            strcmp(extension, "at") == 0) {
+            free(extension);
+            return 0;
+        }
+
+
+        free(extension);
         return 1;
     }
 

@@ -14,7 +14,7 @@ char* CombineStrings(const int numStrings, int total_size, ...) {
     for(int i = 0; i < numStrings; i++) {
         const char* str = va_arg(args, const char*);
         const int str_length = strlen(str);
-        if(writen_size + str_length > total_size) {
+        if(writen_size + str_length > total_size - 1) {
             total_size *= 2;
             result = realloc(result, total_size);
         }
@@ -23,7 +23,7 @@ char* CombineStrings(const int numStrings, int total_size, ...) {
     }
 
     va_end(args);
-    EnsureNullOverTheBuffer(result, writen_size);
+    EnsureNullOverTheBuffer(result, total_size);
     return result;
 }
 

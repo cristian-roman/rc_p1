@@ -1,10 +1,8 @@
 #include <stdio.h>
-#include <netinet/in.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
 #include "custom_c_logger.h"
-#include "custom_c_string.h"
 #include "client_network.h"
 #include "utils.h"
 
@@ -14,7 +12,8 @@ int main(const int argc, char** argv) {
 
     if(argc != 2) {
         const char* pattern = "Usage:\n%s --single-client\n%s --multiple-clients";
-        char* message = GetStringFromPattern(pattern, strlen(pattern) + strlen(argv[0]) * 2 + 10, argv[0], argv[0]);
+        char* message = calloc(strlen(pattern) + strlen(argv[0]) * 2 + 10, sizeof(char));
+        sprintf(message, pattern, argv[0], argv[0]);
         LogError(message);
         free(message);
         exit(-1);
@@ -39,14 +38,17 @@ int main(const int argc, char** argv) {
         }
 
         const char* pattern = "\nInput depth: %d\nInput url: %s\n";
-        char* message = GetStringFromPattern(pattern, strlen(pattern) + strlen(url) + 10, depth, url);
+        char* message = calloc(strlen(pattern) + strlen(url) + 10, sizeof(char));
+        sprintf(message, pattern, depth, url);
         LogInfo(message);
         free(message);
 
         const int client_socket = ConnectToServer();
 
-        pattern = "%s %d";
-        message = GetStringFromPattern(pattern, strlen(pattern) + strlen(url) + 10, url, depth);
+        const int url_lng = strlen(url);
+        pattern = "%d %s %d";
+        message = calloc(strlen(pattern) + url_lng + 20, sizeof(char));
+        sprintf(message, pattern,  url_lng, url, depth);
         free(url);
 
         SendMessageToServer(client_socket, message);
