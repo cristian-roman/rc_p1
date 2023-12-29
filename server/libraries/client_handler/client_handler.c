@@ -61,14 +61,18 @@ int WriteToClient(const int client_socket, const char* server_message) {
     return 0;
 }
 
-void ExtractUrlAndDepthFromClientMessage(char* client_message, char** url, int* depth) {
+void ExtractDataFromClientMessage(char* client_message, char** url, int* depth) {
     const char* token = strtok(client_message, " ");
     int i = 0;
-    while(token != NULL && i < 2) {
-        if(i == 0) {
+    int url_length = 0;
+    while(token != NULL && i < 3) {
+        if (i == 0) {
+            url_length = atoi(token);
+        }
+        else if(i == 1) {
             const int token_length = strlen(token);
             *url = calloc(token_length + 10, sizeof(char));
-            strncpy(*url, token, token_length);
+            strncpy(*url, token, url_length);
             EnsureNullOverTheBuffer(*url, token_length);
         }
         else {
@@ -91,7 +95,7 @@ void* TreatClientRequest(void* arg) {
 
     int relative_depth;
     char *url;
-    ExtractUrlAndDepthFromClientMessage(client_message, &url, &relative_depth);
+    ExtractDataFromClientMessage(client_message, &url, &relative_depth);
     free(client_message);
 
     const char* server_response = "Hello client! I have received the url and the depth. Trying to perform resources download...";

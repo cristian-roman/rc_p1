@@ -4,6 +4,7 @@
 
 #include "client_network.h"
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -17,7 +18,8 @@
 void HandleConnectionError(short* attempt, short *waiting_time, const char* fail_reason)
 {
     const char* pattern = "It might be due to the fact that the maximum number of open files has been reached. Retrying in %d seconds";
-    char* partial_message = GetStringFromPattern(pattern, strlen(pattern) + 10, *waiting_time);
+    char* partial_message = calloc(strlen(pattern) + 10, sizeof(char));
+    sprintf(partial_message, pattern, *waiting_time);
     char* message = CombineStrings(2, strlen(partial_message) + strlen(fail_reason) + 10, fail_reason, partial_message);
     free(partial_message);
     LogWarning(message);
@@ -50,7 +52,8 @@ int ConnectToServer()
 
         if (connect(client_socket, (struct sockaddr*)&server_addr, sizeof(server_addr)) == 0) {
             const char* pattern = "Client socket created successfully. Connected to server with IP address: %s and port: %d";
-            char* message = GetStringFromPattern(pattern, strlen(pattern) + strlen(IP_ADDRESS) + 10, IP_ADDRESS, PORT);
+            char* message = calloc(strlen(pattern) + strlen(IP_ADDRESS) + 10, sizeof(char));
+            sprintf(message, pattern, IP_ADDRESS, PORT);
             LogInfo(message);
             free(message);
             return client_socket;
@@ -69,14 +72,16 @@ void SendMessageToServer(const int client_socket, const char* client_message)
     const int written_size = send(client_socket, client_message, strlen(client_message) + 1, 0);
     if (written_size == -1) {
         const char* pattern = "Failed to send message: %s to server. Consider restarting the client application";
-        char* message = GetStringFromPattern(pattern, strlen(pattern) + strlen(client_message) + 10, client_message);
+        char* message = calloc(strlen(pattern) + strlen(client_message) + 10, sizeof(char));
+        sprintf(message, pattern, client_message);
         LogError(message);
         free(message);
         return;
     }
 
     const char* pattern = "Message: %s sent successfully to server";
-    char* message = GetStringFromPattern(pattern, strlen(pattern) + strlen(client_message) + 10, client_message);
+    char* message = calloc(strlen(pattern) + strlen(client_message) + 10, sizeof(char));
+    sprintf(message, pattern, client_message);
     LogInfo(message);
     free(message);
 }
@@ -93,7 +98,8 @@ char* ReceiveMessageFromServer(const int client_socket, const short exepcted_ser
     }
 
     const char* pattern = "Message: %s received successfully from server";
-    char* message = GetStringFromPattern(pattern, strlen(pattern) + strlen(server_response) + 10, server_response);
+    char* message = calloc(strlen(pattern) + strlen(server_response) + 10, sizeof(char));
+    sprintf(message, pattern, server_response);
     LogInfo(message);
     return message;
 }

@@ -17,7 +17,6 @@
 void CreateFolder(const char* path, const char* folder_name)
 {
     char* new_path = CombineStrings(3, strlen(path) + strlen(folder_name) + 2, path, "/", folder_name);
-
     DIR* dir = opendir(new_path);
     if(dir)
     {

@@ -26,12 +26,12 @@ const char* searching_patterns[] = {
     "href=\""
 };
 
-char* GetResource(const char* location) {
+char* GetResource(const char* page, const char* location) {
     int capacity = 10;
     char* resource = calloc(capacity, sizeof(char));
     int i = 0;
-    const int lng = strlen(location);
-    while (i < lng && location[i] != '"' && location[i] != '\0') {
+    int index = location - page;
+    while (index < 4096 && location[i] != '"' && location[i] != '\0') {
         if (i == capacity) {
             capacity *= 2;
             resource = realloc(resource, capacity * sizeof(char));
@@ -39,6 +39,7 @@ char* GetResource(const char* location) {
         }
         resource[i] = location[i];
         i++;
+        index++;
     }
 
     while(i < capacity)
@@ -117,25 +118,25 @@ struct Resources_Lenght_Pair* ExtractRelativeUrls(const char* resource_path)
     answer->resources = calloc(1, sizeof(char*));
     answer->lenght = 0;
 
-    char* line = NULL;
+    char* page = calloc (4096, sizeof(char));
     size_t len = 0;
     // ReSharper disable once CppEntityAssignedButNoRead
     ssize_t read;
     // ReSharper disable once CppDFAUnusedValue
     int pattern_index;
-    while ((read = getline(&line, &len, file)) != -1)
+    while (fgets(page, 4096, file) != NULL && !feof(file))
     {
         for(int i = 0; i < NUMBER_OF_PATTERNS; i++)
         {
             int position_after_pattern = 0;
             do {
-                const char* line_after_pattern = line + position_after_pattern;
+                const char* line_after_pattern = page + position_after_pattern;
                  pattern_index = BoyerMooreSearch(line_after_pattern, searching_patterns[i]);
                 if(pattern_index == -1)
                     continue;
 
-                position_after_pattern = strstr(line_after_pattern, searching_patterns[i]) - line + strlen(searching_patterns[i]);
-                char* resource = GetResource(line_after_pattern + position_after_pattern);
+                position_after_pattern = strstr(line_after_pattern, searching_patterns[i]) - page + strlen(searching_patterns[i]);
+                char* resource = GetResource(page, line_after_pattern + position_after_pattern);
 
                 if(!IsResourceValid(resource))
                 {
@@ -158,7 +159,7 @@ struct Resources_Lenght_Pair* ExtractRelativeUrls(const char* resource_path)
     }
 
     fclose(file);
-    free(line);
+    free(page);
     return answer;
 }
 
@@ -207,7 +208,7 @@ void AddResourcesToUrlTable(const struct UrlTable* url_table, const struct Folde
 
         if(new_url == NULL || strlen(new_url) == 0 || !IsUrl(new_url))
         {
-            if(new_url!= NULL)
+            if(new_url != NULL)
                 free(new_url);
             continue;
         }
