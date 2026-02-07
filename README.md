@@ -20,10 +20,6 @@ This project applies core computer networking concepts through a hands-on implem
 The goal was to bridge networking theory (OSI / TCP-IP) with production-style systems programming.
 
 
-
-[Image of TCP/IP stack vs OSI model]
-
-
 ---
 
 ## 🔧 Technologies & Concepts
