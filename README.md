@@ -96,15 +96,6 @@ rc_p1/
 
 ---
 
-## 🎯 Why This Project Matters
-
-This project demonstrates:
-* Strong foundations in **networking and distributed systems**.
-* Comfort working close to the **Operating System** and network stack.
-* Ability to reason about **concurrency, reliability, and correctness** in C.
-
----
-
 ## 🎓 Academic Context
 * **University:** "Alexandru Ioan Cuza" University of Iași
 * **Faculty:** Computer Science
